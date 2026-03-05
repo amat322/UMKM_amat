@@ -31,6 +31,7 @@
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 14px; transition: background 0.3s; }
         button.btn-green { background: #28a745; }
         button.btn-red { background: #dc3545; }
+        button.btn-warning { background: #ffc107; color: #333; }
         button.btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
         .btn-back { width: auto; padding: 6px 15px; margin-bottom: 15px; font-size: 12px; display: inline-block; }
         
@@ -48,17 +49,38 @@
         .menu-btn { background: white; padding: 15px 5px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 11px; font-weight: bold;}
         .menu-btn span { display: block; font-size: 24px; margin-bottom: 5px; }
 
+        .check-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .check-item { font-size: 12px; display: flex; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 5px; border: 1px solid #eee;}
+        .check-item input { width: auto; margin: 0 8px 0 0; }
+
         .theme-options { display: flex; gap: 10px; justify-content: space-around; margin-top: 15px; }
         .theme-circle { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .theme-circle.active { border-color: #333; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 
         .search-select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; font-size: 14px; color: #333; }
+        .search-select:hover { border-color: var(--primary); }
         
         .modal-search { display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 100%; background: var(--bg-color); z-index: 1000; flex-direction: column; }
         .modal-search.active { display: flex; }
         .modal-header { background: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+        .modal-header .btn-back { margin-bottom: 0; }
+        .modal-header h4 { margin: 0; flex: 1; }
         .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
-        .search-item { padding: 15px; border-radius: 8px; background: white; margin-bottom: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .modal-body input { font-size: 16px; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .search-item { padding: 15px; border-radius: 8px; background: white; margin-bottom: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s; }
+        .search-item:active { background: #e9ecef; }
+        .search-item b { display: block; margin-bottom: 4px; }
+
+        /* Accordion CSS untuk Utang/Piutang */
+        .accordion-header { cursor: pointer; padding: 10px 0; }
+        .accordion-content { display: none; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px; border: 1px solid #eee; }
+        .accordion-content.active { display: block; }
+        .cicilan-item { border-bottom: 1px dashed #ccc; padding: 5px 0; font-size: 11px; }
+        .cicilan-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -66,7 +88,7 @@
 <div class="app-container">
     <div class="header">
         <h2 id="judulHalaman">Beranda</h2>
-        <div class="saldo-badge">Total Saldo: Rp <span id="displaySaldo">0</span></div>
+        <div class="saldo-badge">Total Saldo Manual: Rp <span id="displaySaldo">0</span></div>
     </div>
 
     <div id="modal-pencarian" class="modal-search">
@@ -75,26 +97,82 @@
             <h4 id="judulPencarian">Cari</h4>
         </div>
         <div class="modal-body">
-            <input type="text" id="inputPencarian" placeholder="Ketik nama..." oninput="filterPencarian()">
+            <input type="text" id="inputPencarian" placeholder="Ketik nama di sini..." oninput="filterPencarian()" autocomplete="off">
             <div id="listHasilPencarian"></div>
+        </div>
+    </div>
+
+    <div id="modal-edit-transaksi" class="modal-search">
+        <div class="modal-header">
+            <button class="btn-outline btn-back" onclick="tutupEditTransaksi()">⬅ Kembali</button>
+            <h4>Edit Transaksi</h4>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editTransId">
+            <label class="text-small">Tanggal:</label>
+            <input type="date" id="editTransTgl">
+            <label class="text-small">Produk:</label>
+            <input type="text" id="editTransProduk" readonly style="background:#eee;">
+            <label class="text-small">Total Omset (Rp):</label>
+            <input type="text" inputmode="numeric" pattern="[0-9.]*" id="editTransTotal" oninput="formatInputRupiah(event)">
+            <label class="text-small">Status:</label>
+            <select id="editTransStatus">
+                <option value="Lunas">Lunas</option>
+                <option value="Piutang">Ngasbon / Piutang</option>
+            </select>
+            <button class="btn-green" onclick="simpanEditTransaksi()">Simpan Perubahan</button>
         </div>
     </div>
 
     <div id="page-beranda" class="page active">
         <div class="card grid-2">
-            <div><div class="text-small">Omset Hari Ini</div><div class="text-blue">Rp <span id="rekapHarian">0</span></div></div>
-            <div><div class="text-small">Untung Hari Ini</div><div class="text-green">Rp <span id="labaHarian">0</span></div></div>
+            <div><div class="text-small">Omset Hari Ini</div><div class="text-blue" style="font-size: 16px;">Rp <span id="rekapHarian">0</span></div></div>
+            <div><div class="text-small">Untung Hari Ini</div><div class="text-green" style="font-size: 16px;">Rp <span id="labaHarian">0</span></div></div>
+            <div style="margin-top: 10px;"><div class="text-small">Omset Bulan Ini</div><div class="text-blue" style="font-size: 16px;">Rp <span id="rekapBulanan">0</span></div></div>
+            <div style="margin-top: 10px;"><div class="text-small">Untung Bulan Ini</div><div class="text-green" style="font-size: 16px;">Rp <span id="labaBulanan">0</span></div></div>
+            <div style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"><div class="text-small">Piutang (Uang di Luar)</div><div class="text-red">Rp <span id="rekapPiutang">0</span></div></div>
+            <div style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;"><div class="text-small">Total Utang Saya</div><div class="text-red">Rp <span id="rekapUtang">0</span></div></div>
         </div>
         
         <div class="card">
-            <h4>Riwayat Transaksi</h4>
+            <h4>Riwayat & Filter Transaksi</h4>
+            <p class="text-small" style="margin-bottom: 10px; color: #666;">*Transaksi berstatus Ngasbon/Piutang otomatis disembunyikan dan dipindah ke layar Utang/Piutang.</p>
+            <select id="filterWaktuBeranda" onchange="ubahFilterBeranda()" style="margin-top: 5px; font-weight: bold;">
+                <option value="semua">📂 Semua Transaksi (Lunas)</option>
+                <option value="harian">📅 Transaksi Harian (Hari Ini)</option>
+                <option value="mingguan">📆 Transaksi Mingguan (7 Hari Terakhir)</option>
+                <option value="bulanan">🗓️ Transaksi Bulanan (Bulan Ini)</option>
+                <option value="tahunan">🏆 Transaksi Tahunan (Tahun Ini)</option>
+                <option value="custom">⚙️ Transaksi Custom (Pilih Tanggal)</option>
+            </select>
+            
+            <div id="wadahFilterCustom" style="display: none; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <div class="grid-2">
+                    <div>
+                        <label class="text-small">Dari Tanggal:</label>
+                        <input type="date" id="tglMulaiCustom" style="margin-bottom: 0;">
+                    </div>
+                    <div>
+                        <label class="text-small">Sampai Tanggal:</label>
+                        <input type="date" id="tglAkhirCustom" style="margin-bottom: 0;">
+                    </div>
+                </div>
+                <button class="btn-outline" style="padding: 8px; margin-top: 10px; margin-bottom: 0;" onclick="terapkanFilterCustom()">Cari Data</button>
+            </div>
+
+            <div class="flex-between" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                <span class="text-small">Jumlah Transaksi:</span>
+                <span class="text-blue" id="jumlahTransaksiBeranda" style="font-size: 18px; font-weight: bold;">0</span>
+            </div>
+            
             <div class="flex-between" style="background: #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffdf7e;">
                 <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
                     <input type="checkbox" id="checkSemuaTransaksi" onchange="togglePilihSemuaTransaksi()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
                 </label>
                 <button class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusTransaksiTerpilih()">🗑 Hapus Terpilih</button>
             </div>
-            <div id="listTransaksiBeranda"></div>
+            
+            <div id="listTransaksiBeranda" style="max-height: 350px; overflow-y: auto; padding-right: 5px;"></div>
         </div>
     </div>
 
@@ -102,38 +180,64 @@
         <div class="card">
             <h3>Buat Transaksi</h3>
             <form onsubmit="prosesTransaksi(event)">
-                <label class="text-small">Tanggal:</label>
-                <input type="date" id="kasirTanggal" required>
-                
-                <label class="text-small">Produk:</label>
+                <label class="text-small text-blue"><b>📅 Tanggal Transaksi:</b></label>
+                <input type="date" id="kasirTanggal" required style="border-color: var(--primary); background: #f0f8ff;">
+
+                <label class="text-small">Produk / Jasa:</label>
                 <div class="search-select" onclick="bukaPencarian('produk')">
-                    <span id="labelKasirProduk">🔍 Pilih Produk...</span>
+                    <span id="labelKasirProduk" style="color:#777;">🔍 Klik untuk Cari Produk...</span>
                 </div>
                 <input type="hidden" id="kasirProdukId" required>
 
+                <label class="text-small">Jumlah:</label>
+                <input type="number" inputmode="numeric" id="kasirJumlah" placeholder="Jumlah Barang/Jasa" value="1" required>
+                
                 <label class="text-small">Pelanggan:</label>
                 <div class="search-select" onclick="bukaPencarian('pelanggan')">
-                    <span id="labelKasirPelanggan">Umum</span>
+                    <span id="labelKasirPelanggan"><b>Umum / Pelanggan Baru</b></span>
                 </div>
-                <input type="hidden" id="kasirPelangganId">
+                <input type="hidden" id="kasirPelangganId" value="">
+                
+                <label class="text-small">Status Pembayaran:</label>
+                <select id="kasirStatus" required>
+                    <option value="Lunas">Lunas</option>
+                    <option value="Piutang">Ngasbon / Piutang</option>
+                </select>
 
-                <input type="number" id="kasirJumlah" value="1" required>
-                <button type="submit" class="btn-green">Simpan Transaksi</button>
+                <button type="submit" class="btn-green" style="margin-top: 10px;">Proses Pembayaran</button>
             </form>
         </div>
     </div>
 
     <div id="page-produk" class="page">
         <div class="card">
-            <h4>Tambah Produk</h4>
-            <form onsubmit="tambahProduk(event)">
-                <input type="text" id="namaProduk" placeholder="Nama Produk" required>
-                <input type="text" id="hargaModal" placeholder="Modal (Rp)" oninput="formatInputRupiah(event)" required>
-                <input type="text" id="hargaJual" placeholder="Jual (Rp)" oninput="formatInputRupiah(event)" required>
-                <button type="submit">Tambah</button>
+            <h4 id="judulFormProduk">Tambah Produk Baru</h4>
+            <form onsubmit="simpanAtauEditProduk(event)">
+                <input type="hidden" id="editProdukId" value="">
+                <input type="text" id="namaProduk" placeholder="Nama Produk / Jasa" required>
+                <div class="grid-2">
+                    <input type="text" inputmode="numeric" pattern="[0-9.]*" id="hargaModal" placeholder="Harga Modal (Rp)" oninput="formatInputRupiah(event)" required>
+                    <input type="text" inputmode="numeric" pattern="[0-9.]*" id="hargaJual" placeholder="Harga Jual (Rp)" oninput="formatInputRupiah(event)" required>
+                </div>
+                <div class="grid-2">
+                    <button type="submit" id="btnSubmitProduk">Tambah Produk</button>
+                    <button type="button" id="btnBatalEdit" class="btn-outline" style="display: none;" onclick="batalEditProduk()">Batal Edit</button>
+                </div>
             </form>
         </div>
+
         <div class="card">
+            <div class="flex-between" style="margin-bottom: 10px;">
+                <h4>Daftar Produk Digital / Jasa</h4>
+            </div>
+            
+            <div class="flex-between" style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
+                <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="checkSemuaProduk" onchange="togglePilihSemuaProduk()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
+                </label>
+                <button class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusProdukTerpilih()">🗑 Hapus Terpilih</button>
+            </div>
+
             <div id="listProduk"></div>
         </div>
     </div>
@@ -141,162 +245,675 @@
     <div id="page-menu" class="page">
         <div class="menu-grid">
             <div class="menu-btn" onclick="bukaSubHalaman('sub-pelanggan')"><span>👥</span>Pelanggan</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-utang')"><span>📒</span>Utang/Piutang</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-alokasi')"><span>📊</span>Bagi Hasil</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet Manual</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div>
-        </div>
-        
-        <div id="sub-pelanggan" class="card" style="display:none;">
-            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <form onsubmit="tambahPelanggan(event)">
-                <input type="text" id="namaPelanggan" placeholder="Nama Pelanggan" required>
-                <button type="submit">Simpan</button>
-            </form>
-            <div id="listPelanggan"></div>
         </div>
 
         <div id="sub-tema" class="card" style="display:none;">
             <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Pilih Warna Tema</h4>
             <div class="theme-options">
-                <div class="theme-circle" style="background: #007bff;" onclick="ubahTema('#007bff')"></div>
-                <div class="theme-circle" style="background: #28a745;" onclick="ubahTema('#28a745')"></div>
-                <div class="theme-circle" style="background: #dc3545;" onclick="ubahTema('#dc3545')"></div>
+                <div class="theme-circle" style="background-color: #007bff;" onclick="ubahTema('#007bff')"></div>
+                <div class="theme-circle" style="background-color: #28a745;" onclick="ubahTema('#28a745')"></div>
+                <div class="theme-circle" style="background-color: #6f42c1;" onclick="ubahTema('#6f42c1')"></div>
+                <div class="theme-circle" style="background-color: #fd7e14;" onclick="ubahTema('#fd7e14')"></div>
+                <div class="theme-circle" style="background-color: #343a40;" onclick="ubahTema('#343a40')"></div>
             </div>
+        </div>
+
+        <div id="sub-alokasi" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Kalkulator Bagi Hasil (Alokasi)</h4>
+            <p class="text-small" style="margin-bottom: 10px;">Bagi keuntungan manual untuk Putar Modal, Jajan, dll.</p>
+            
+            <div style="background: #f0f8ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #cce5ff;">
+                <label class="text-small">Pilih Periode Keuntungan:</label>
+                <select id="periodeAlokasi" onchange="updateLabaAlokasi()">
+                    <option value="bulanIni">Bulan Ini</option>
+                    <option value="hariIni">Hari Ini</option>
+                    <option value="semua">Semua Waktu</option>
+                </select>
+                
+                <label style="display: flex; align-items: center; font-size: 12px; margin-top: 10px; cursor: pointer;">
+                    <input type="checkbox" id="cbKurangiPiutang" onchange="updateLabaAlokasi()" checked style="width: auto; margin: 0 8px 0 0;"> 
+                    Kurangi Laba dengan Uang di Luar (Piutang)
+                </label>
+                <label style="display: flex; align-items: center; font-size: 12px; margin-top: 5px; cursor: pointer;">
+                    <input type="checkbox" id="cbKurangiUtang" onchange="updateLabaAlokasi()" style="width: auto; margin: 0 8px 0 0;"> 
+                    Kurangi Laba dengan Utang Saya
+                </label>
+                
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #aaa;">
+                    <div class="text-small">Total Laba Tunai Bersih:</div>
+                    <div class="text-green" style="font-size: 20px;">Rp <span id="labaBersihAlokasi">0</span></div>
+                </div>
+            </div>
+
+            <label class="text-small">Persentase Putar Modal (%):</label>
+            <input type="number" inputmode="numeric" id="persenModal" placeholder="Contoh: 50" oninput="hitungBagiHasil()">
+            <div class="text-blue" style="margin-top: -5px; margin-bottom: 10px; font-weight: bold;">Rp <span id="hasilModal">0</span></div>
+
+            <label class="text-small">Persentase Uang Jajan/Pribadi (%):</label>
+            <input type="number" inputmode="numeric" id="persenJajan" placeholder="Contoh: 30" oninput="hitungBagiHasil()">
+            <div class="text-blue" style="margin-top: -5px; margin-bottom: 10px; font-weight: bold;">Rp <span id="hasilJajan">0</span></div>
+
+            <label class="text-small">Persentase Tabungan/Lainnya (%):</label>
+            <input type="number" inputmode="numeric" id="persenTabungan" placeholder="Contoh: 20" oninput="hitungBagiHasil()">
+            <div class="text-blue" style="margin-top: -5px; margin-bottom: 10px; font-weight: bold;">Rp <span id="hasilTabungan">0</span></div>
+            
+            <div id="peringatanPersen" class="text-red text-small" style="display: none;">Total persentase harus 100%!</div>
+        </div>
+
+        <div id="sub-pelanggan" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Tambah Pelanggan</h4>
+            <form onsubmit="tambahPelanggan(event)">
+                <input type="text" id="namaPelanggan" placeholder="Nama Pelanggan" required>
+                <button type="submit">Simpan</button>
+            </form>
+            <h4 style="margin-top:15px;">Daftar Pelanggan</h4>
+            <div id="listPelanggan"></div>
+        </div>
+
+        <div id="sub-utang" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Catat Utang / Piutang Baru</h4>
+            <form onsubmit="tambahUtang(event)">
+                <select id="jenisUtang" required>
+                    <option value="Piutang">Orang Ngutang (Piutang)</option>
+                    <option value="Utang">Saya Ngutang (Utang)</option>
+                </select>
+                <select id="namaUtang" required></select>
+                <input type="text" inputmode="numeric" pattern="[0-9.]*" id="nominalUtang" placeholder="Nominal Utang (Rp)" oninput="formatInputRupiah(event)" required>
+                <button type="submit">Catat Transaksi Utang</button>
+            </form>
+            <h4 style="margin-top:15px; margin-bottom:10px;">Daftar Catatan (Tap Nama Untuk Detail)</h4>
+            <div id="listUtang"></div>
+        </div>
+
+        <div id="sub-riwayat" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Semua Transaksi (Lunas & Ngasbon)</h4>
+            <div id="listRiwayatFull"></div>
+        </div>
+
+        <div id="sub-dompet" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Tambah Dompet Baru</h4>
+            <form onsubmit="tambahDompet(event)">
+                <input type="text" id="namaDompetBaru" placeholder="Nama Dompet (Misal: BCA, Kasir)" required>
+                <input type="text" inputmode="numeric" pattern="[0-9.]*" id="saldoAwalDompet" placeholder="Saldo Awal (Rp)" oninput="formatInputRupiah(event)">
+                <button type="submit" class="btn-green">Tambah Dompet</button>
+            </form>
+            <h4 style="margin-top:20px;">Daftar Dompet Tersedia</h4>
+            <div id="listDompet"></div>
+        </div>
+
+        <div id="sub-backup" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4 style="color:var(--primary);">📋 Ekspor (Salin ke Excel)</h4>
+            <div class="check-group">
+                <label class="check-item"><input type="checkbox" id="exTgl" checked> Tanggal</label>
+                <label class="check-item"><input type="checkbox" id="exHari" checked> Hari</label>
+                <label class="check-item"><input type="checkbox" id="exPel" checked> Pelanggan</label>
+                <label class="check-item"><input type="checkbox" id="exProd" checked> Produk</label>
+                <label class="check-item"><input type="checkbox" id="exMod" checked> Modal</label>
+                <label class="check-item"><input type="checkbox" id="exJual" checked> Jual (Omset)</label>
+                <label class="check-item"><input type="checkbox" id="exUnt" checked> Keuntungan</label>
+            </div>
+            <button class="btn-outline" onclick="salinDataExcel()">Salin Data Transaksi</button>
+
+            <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
+
+            <h4 style="color:#28a745;">📥 Impor (Tempel dari Excel)</h4>
+            <div class="check-group">
+                <label class="check-item"><input type="checkbox" id="imTgl" checked> Tanggal</label>
+                <label class="check-item"><input type="checkbox" id="imHari" checked> Hari</label>
+                <label class="check-item"><input type="checkbox" id="imPel" checked> Pelanggan</label>
+                <label class="check-item"><input type="checkbox" id="imProd" checked> Produk</label>
+                <label class="check-item"><input type="checkbox" id="imMod" checked> Modal</label>
+                <label class="check-item"><input type="checkbox" id="imJual" checked> Jual</label>
+                <label class="check-item"><input type="checkbox" id="imUnt" checked> Untung</label>
+            </div>
+            <textarea id="pasteExcelText" rows="3" placeholder="Paste (Tempel) baris kolom dari Excel di sini..."></textarea>
+            <button class="btn-green" onclick="imporDataExcel()">Proses Impor Data</button>
         </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="bukaHalaman('beranda', this, 'Beranda')"><span class="nav-icon">🏠</span>Beranda</div>
         <div class="nav-item" onclick="bukaHalaman('kasir', this, 'Kasir')"><span class="nav-icon">🛒</span>Kasir</div>
-        <div class="nav-item" onclick="bukaHalaman('produk', this, 'Produk')"><span class="nav-icon">📦</span>Produk</div>
-        <div class="nav-item" onclick="bukaHalaman('menu', this, 'Menu')"><span class="nav-icon">☰</span>Menu</div>
+        <div class="nav-item" onclick="bukaHalaman('produk', this, 'Data Produk')"><span class="nav-icon">📦</span>Produk</div>
+        <div class="nav-item" onclick="bukaHalaman('menu', this, 'Menu Lainnya')"><span class="nav-icon">☰</span>Menu</div>
     </div>
 </div>
 
 <script>
-    let db = { produk: [], pelanggan: [], transaksi: [], tema: '#007bff' };
-    let modePencarian = '';
+    let db = { dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], tema: '#007bff' };
+    let filterSaatIni = 'semua';
+    let modePencarian = ''; 
 
     window.onload = function() {
-        let saved = localStorage.getItem('sistemUMKMPro');
-        if(saved) db = JSON.parse(saved);
+        let savedData = localStorage.getItem('sistemUMKMPro');
+        if(savedData) {
+            let parsedData = JSON.parse(savedData);
+            db = { ...db, ...parsedData }; 
+            if(typeof db.saldo !== 'undefined') {
+                db.dompet = [{ id: Date.now(), nama: "Dompet Utama", saldo: db.saldo }];
+                delete db.saldo; 
+                simpanData();
+            }
+        }
+        if(!db.dompet || db.dompet.length === 0) {
+            db.dompet = [{ id: Date.now(), nama: "Dompet Utama", saldo: 0 }];
+            simpanData();
+        }
+        
         document.getElementById('kasirTanggal').value = ambilTanggal();
         ubahTema(db.tema, false);
-        updateTampilan();
+        updateSemuaTampilan();
     };
 
-    function simpan() { 
+    function simpanData() { 
+        db.transaksi.sort((a, b) => {
+            if(a.tanggal === b.tanggal) return a.id - b.id;
+            return a.tanggal > b.tanggal ? 1 : -1;
+        });
         localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
-        updateTampilan(); 
+        updateSemuaTampilan(); 
+    }
+    
+    function formatInputRupiah(e) {
+        let value = e.target.value.replace(/[^0-9]/g, ''); 
+        if(value !== '') e.target.value = parseInt(value, 10).toLocaleString('id-ID'); 
+        else e.target.value = '';
     }
 
-    function formatRupiah(n) { return parseInt(n).toLocaleString('id-ID'); }
-    function getAngka(s) { return parseInt(s.replace(/[^0-9]/g, '')) || 0; }
-    function formatInputRupiah(e) { e.target.value = formatRupiah(getAngka(e.target.value)); }
-    function ambilTanggal() { return new Date().toISOString().split('T')[0]; }
-
-    // --- FUNGSI HARI (YANG BARU) ---
-    function getNamaHari(tgl) {
-        const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        return hari[new Date(tgl).getDay()];
+    function getAngkaMurni(str) {
+        if(!str) return 0;
+        return parseInt(str.toString().replace(/[^0-9]/g, ''), 10) || 0;
     }
 
-    function tambahProduk(e) {
+    function formatRupiah(angka) { return parseInt(angka).toLocaleString('id-ID'); }
+    function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function getNamaHari(tglString) { let d = new Date(tglString); return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][d.getDay()]; }
+
+    // ================= FUNGSI PRODUK =================
+    function simpanAtauEditProduk(e) {
         e.preventDefault();
-        db.produk.push({ id: Date.now(), nama: document.getElementById('namaProduk').value, modal: getAngka(document.getElementById('hargaModal').value), harga: getAngka(document.getElementById('hargaJual').value) });
-        simpan();
+        let hModal = getAngkaMurni(document.getElementById('hargaModal').value);
+        let hJual = getAngkaMurni(document.getElementById('hargaJual').value);
+        let nama = document.getElementById('namaProduk').value;
+        let idEdit = document.getElementById('editProdukId').value;
+
+        if (idEdit !== "") {
+            let produk = db.produk.find(p => p.id == idEdit);
+            if (produk) {
+                produk.nama = nama; produk.modal = hModal; produk.harga = hJual;
+            }
+            batalEditProduk(); 
+        } else {
+            db.produk.push({ id: Date.now(), nama: nama, modal: hModal, harga: hJual, jenis: 'Digital / Jasa' });
+            document.getElementById('namaProduk').value = ''; 
+            document.getElementById('hargaModal').value = ''; 
+            document.getElementById('hargaJual').value = '';
+        }
+        simpanData();
     }
+
+    function editProduk(id) {
+        let p = db.produk.find(x => x.id == id);
+        if (p) {
+            document.getElementById('editProdukId').value = p.id;
+            document.getElementById('namaProduk').value = p.nama;
+            document.getElementById('hargaModal').value = formatRupiah(p.modal);
+            document.getElementById('hargaJual').value = formatRupiah(p.harga);
+            document.getElementById('judulFormProduk').innerText = "Edit Produk";
+            document.getElementById('btnSubmitProduk').innerText = "Simpan Perubahan";
+            document.getElementById('btnSubmitProduk').classList.add('btn-green');
+            document.getElementById('btnBatalEdit').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function batalEditProduk() {
+        document.getElementById('editProdukId').value = '';
+        document.getElementById('namaProduk').value = '';
+        document.getElementById('hargaModal').value = '';
+        document.getElementById('hargaJual').value = '';
+        document.getElementById('judulFormProduk').innerText = "Tambah Produk Baru";
+        document.getElementById('btnSubmitProduk').innerText = "Tambah Produk";
+        document.getElementById('btnSubmitProduk').classList.remove('btn-green');
+        document.getElementById('btnBatalEdit').style.display = "none";
+    }
+
+    function hapusProduk(id) { if(confirm("Hapus produk ini?")) { db.produk = db.produk.filter(p => p.id !== id); simpanData(); } }
+    function togglePilihSemuaProduk() { let isChecked = document.getElementById('checkSemuaProduk').checked; document.querySelectorAll('.check-produk').forEach(cb => { cb.checked = isChecked; }); }
+    function cekStatusPilihSemua() { let semuaTerpilih = document.querySelectorAll('.check-produk:not(:checked)').length === 0; let adaData = document.querySelectorAll('.check-produk').length > 0; document.getElementById('checkSemuaProduk').checked = (semuaTerpilih && adaData); }
+    function hapusProdukTerpilih() {
+        let elemenTerpilih = document.querySelectorAll('.check-produk:checked');
+        let arrayIdTerpilih = Array.from(elemenTerpilih).map(cb => parseInt(cb.value));
+        if (arrayIdTerpilih.length === 0) return alert("Silakan centang minimal satu produk.");
+        if (confirm(`Yakin ingin menghapus ${arrayIdTerpilih.length} produk?`)) { db.produk = db.produk.filter(p => !arrayIdTerpilih.includes(p.id)); document.getElementById('checkSemuaProduk').checked = false; simpanData(); }
+    }
+
+    // ================= PENCARIAN & KASIR =================
+    function bukaPencarian(tipe) {
+        modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active');
+        document.getElementById('judulPencarian').innerText = tipe === 'produk' ? 'Pencarian Produk' : 'Pencarian Pelanggan';
+        let inputEl = document.getElementById('inputPencarian'); inputEl.value = ''; filterPencarian(); setTimeout(() => inputEl.focus(), 100); 
+    }
+    function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
+    function filterPencarian() {
+        let keyword = document.getElementById('inputPencarian').value.toLowerCase(); let htmlList = '';
+        if (modePencarian === 'produk') {
+            let dataSaring = db.produk.map((p, i) => ({...p, idAsli: i})).filter(p => p.nama.toLowerCase().includes(keyword));
+            if(dataSaring.length > 0) htmlList = dataSaring.map(p => `<div class="search-item" onclick="pilihProduk(${p.idAsli}, '${p.nama}', ${p.harga})"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
+            else htmlList = `<div class="text-small" style="text-align:center; padding: 20px;">Pencarian tidak ditemukan.</div>`;
+        } else if (modePencarian === 'pelanggan') {
+            let dataSaring = db.pelanggan.map((p, i) => ({...p, idAsli: i})).filter(p => p.nama.toLowerCase().includes(keyword));
+            if ("umum pelanggan baru".includes(keyword) || keyword === "") htmlList += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
+            htmlList += dataSaring.map(p => `<div class="search-item" onclick="pilihPelanggan(${p.idAsli}, '${p.nama}')"><b>${p.nama}</b></div>`).join('');
+        }
+        document.getElementById('listHasilPencarian').innerHTML = htmlList;
+    }
+    function pilihProduk(index, nama, harga) { document.getElementById('kasirProdukId').value = index; document.getElementById('labelKasirProduk').innerHTML = `<b class="text-blue">${nama}</b> (Rp ${formatRupiah(harga)})`; tutupPencarian(); }
+    function pilihPelanggan(index, nama) { document.getElementById('kasirPelangganId').value = index; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; tutupPencarian(); }
 
     function prosesTransaksi(e) {
         e.preventDefault();
-        let p = db.produk[document.getElementById('kasirProdukId').value];
-        let tgl = document.getElementById('kasirTanggal').value;
-        let qty = parseInt(document.getElementById('kasirJumlah').value);
-        let pelIdx = document.getElementById('kasirPelangganId').value;
+        let tglTransaksi = document.getElementById('kasirTanggal').value;
+        let prodIndex = document.getElementById('kasirProdukId').value;
+        if(prodIndex === "") return alert("Silakan klik dan cari produk terlebih dahulu!");
         
-        db.transaksi.push({
-            id: Date.now(),
-            tanggal: tgl,
-            hari: getNamaHari(tgl), // Simpan nama hari
-            namaProduk: p.nama,
-            total: p.harga * qty,
-            untung: (p.harga - p.modal) * qty,
-            pembeli: pelIdx !== "" ? db.pelanggan[pelIdx].name : "Umum"
-        });
-        simpan();
+        let p = db.produk[prodIndex]; let jumlah = parseInt(document.getElementById('kasirJumlah').value);
+        let tModal = p.modal * jumlah, tJual = p.harga * jumlah, untung = tJual - tModal;
+        let status = document.getElementById('kasirStatus').value;
+        let pelIndex = document.getElementById('kasirPelangganId').value;
+        let nmPelanggan = pelIndex !== "" ? db.pelanggan[pelIndex].nama : "Umum";
+
+        db.transaksi.push({ id: Date.now(), tanggal: tglTransaksi, namaProduk: p.nama, jumlah: jumlah, modal: tModal, total: tJual, untung: untung, status: status, pembeli: nmPelanggan, dompetId: 'none' });
+        
+        // Pindah otomatis ke Utang beserta NAMA PRODUK jika statusnya Ngasbon
+        if(status !== 'Lunas') {
+            db.utang.push({ id: Date.now(), jenis: 'Piutang', nama: nmPelanggan, namaProduk: p.nama, nominal: tJual, status: 'Belum Lunas', cicilan: [] });
+        }
+        
+        document.getElementById('kasirTanggal').value = ambilTanggal(); document.getElementById('kasirJumlah').value = '1';
+        document.getElementById('kasirProdukId').value = ''; document.getElementById('labelKasirProduk').innerHTML = '<span style="color:#777;">🔍 Klik Cari Produk...</span>';
+        document.getElementById('kasirPelangganId').value = ''; document.getElementById('labelKasirPelanggan').innerHTML = '<b>Umum / Pelanggan Baru</b>';
+
+        simpanData(); 
+        if(status !== 'Lunas') {
+            alert('Transaksi Ngasbon berhasil dicatat! Data masuk ke menu Utang/Piutang.');
+        } else {
+            alert('Transaksi Berhasil!'); 
+        }
         bukaHalaman('beranda', document.querySelectorAll('.nav-item')[0], 'Beranda');
     }
 
-    function togglePilihSemuaTransaksi() {
-        let check = document.getElementById('checkSemuaTransaksi').checked;
-        document.querySelectorAll('.check-t').forEach(c => c.checked = check);
-    }
-
+    // ================= TRANSAKSI (BERANDA & EDIT) =================
+    function ubahFilterBeranda() { filterSaatIni = document.getElementById('filterWaktuBeranda').value; document.getElementById('wadahFilterCustom').style.display = filterSaatIni === 'custom' ? 'block' : 'none'; document.getElementById('checkSemuaTransaksi').checked = false; renderDaftarTransaksiBeranda(); }
+    function terapkanFilterCustom() { document.getElementById('checkSemuaTransaksi').checked = false; renderDaftarTransaksiBeranda(); }
+    function togglePilihSemuaTransaksi() { let isChecked = document.getElementById('checkSemuaTransaksi').checked; document.querySelectorAll('.check-transaksi').forEach(cb => { cb.checked = isChecked; }); }
+    function cekStatusPilihSemuaTransaksi() { let semua = document.querySelectorAll('.check-transaksi:not(:checked)').length === 0; let ada = document.querySelectorAll('.check-transaksi').length > 0; document.getElementById('checkSemuaTransaksi').checked = (semua && ada); }
     function hapusTransaksiTerpilih() {
-        let terpilih = Array.from(document.querySelectorAll('.check-t:checked')).map(c => parseInt(c.value));
-        if(confirm(`Hapus ${terpilih.length} transaksi?`)) {
-            db.transaksi = db.transaksi.filter(t => !terpilih.includes(t.id));
-            simpan();
+        let el = document.querySelectorAll('.check-transaksi:checked'); let arr = Array.from(el).map(cb => parseInt(cb.value));
+        if (arr.length === 0) return alert("Silakan centang transaksi.");
+        if (confirm(`Hapus ${arr.length} transaksi?`)) { db.transaksi = db.transaksi.filter(t => !arr.includes(t.id)); document.getElementById('checkSemuaTransaksi').checked = false; simpanData(); }
+    }
+    function hapusTransaksi(id) { if(confirm("Yakin menghapus transaksi ini?")) { db.transaksi = db.transaksi.filter(t => t.id !== id); simpanData(); } }
+
+    function bukaEditTransaksi(id) {
+        let t = db.transaksi.find(x => x.id === id);
+        if(!t) return;
+        document.getElementById('editTransId').value = t.id;
+        document.getElementById('editTransTgl').value = t.tanggal;
+        document.getElementById('editTransProduk').value = t.namaProduk;
+        document.getElementById('editTransTotal').value = formatRupiah(t.total);
+        document.getElementById('editTransStatus').value = t.status;
+        document.getElementById('modal-edit-transaksi').classList.add('active');
+    }
+    function tutupEditTransaksi() { document.getElementById('modal-edit-transaksi').classList.remove('active'); }
+    function simpanEditTransaksi() {
+        let id = parseInt(document.getElementById('editTransId').value);
+        let t = db.transaksi.find(x => x.id === id);
+        if(t) {
+            t.tanggal = document.getElementById('editTransTgl').value;
+            let omsetBaru = getAngkaMurni(document.getElementById('editTransTotal').value);
+            if(t.total > 0) {
+                let rasioUntung = t.untung / t.total;
+                t.total = omsetBaru; t.untung = Math.round(omsetBaru * rasioUntung);
+            } else { t.total = omsetBaru; }
+            t.status = document.getElementById('editTransStatus').value;
+            simpanData(); tutupEditTransaksi();
         }
     }
 
-    function updateTampilan() {
-        let tglIni = ambilTanggal();
-        let omset = 0, laba = 0;
-        db.transaksi.forEach(t => { if(t.tanggal === tglIni) { omset += t.total; laba += t.untung; } });
+    function renderDaftarTransaksiBeranda() {
+        let tglHariIni = ambilTanggal(); let blnIni = tglHariIni.substring(0, 7); let thnIni = tglHariIni.substring(0, 4);
+        let d = new Date(); d.setDate(d.getDate() - 7); let tglMingguLalu = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        
+        let dataTampil = db.transaksi.filter(t => {
+            // Beranda hanya menampilkan transaksi LUNAS
+            if (t.status !== 'Lunas') return false; 
+            
+            if (filterSaatIni === 'semua') return true;
+            if (filterSaatIni === 'harian') return t.tanggal === tglHariIni;
+            if (filterSaatIni === 'mingguan') return t.tanggal >= tglMingguLalu && t.tanggal <= tglHariIni;
+            if (filterSaatIni === 'bulanan') return t.tanggal.startsWith(blnIni);
+            if (filterSaatIni === 'tahunan') return t.tanggal.startsWith(thnIni);
+            if (filterSaatIni === 'custom') { let mulai = document.getElementById('tglMulaiCustom').value; let akhir = document.getElementById('tglAkhirCustom').value; return (mulai && akhir) ? (t.tanggal >= mulai && t.tanggal <= akhir) : true; }
+            return true;
+        }).slice().reverse();
+        
+        document.getElementById('jumlahTransaksiBeranda').innerText = dataTampil.length;
+        document.getElementById('listTransaksiBeranda').innerHTML = dataTampil.map(t => renderItemTransaksi(t)).join('') || '<div class="text-small" style="text-align:center; padding:20px 10px;">Tidak ada riwayat Lunas.</div>';
+    }
 
-        document.getElementById('rekapHarian').innerText = formatRupiah(omset);
-        document.getElementById('labaHarian').innerText = formatRupiah(laba);
-
-        document.getElementById('listTransaksiBeranda').innerHTML = db.transaksi.slice().reverse().map(t => `
-            <div class="list-item flex-between">
-                <div style="display:flex; gap:10px;">
-                    <input type="checkbox" class="check-t" value="${t.id}">
+    function renderItemTransaksi(t) {
+        return `
+            <div class="list-item flex-between" style="align-items: flex-start;">
+                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                    <input type="checkbox" class="check-transaksi" value="${t.id}" style="width: auto; margin-top: 4px;" onchange="cekStatusPilihSemuaTransaksi()">
                     <div>
-                        <b>${t.namaProduk}</b><br>
-                        <span class="text-small">${t.hari}, ${t.tanggal} | ${t.pembeli}</span>
+                        <b>${t.namaProduk}</b> (x${t.jumlah})<br>
+                        <span class="text-small">${t.tanggal} | ${t.pembeli} | <span class="${t.status === 'Lunas' ? 'text-green' : 'text-red'}">${t.status}</span></span>
                     </div>
                 </div>
-                <b class="text-blue">Rp ${formatRupiah(t.total)}</b>
+                <div style="text-align:right; display:flex; flex-direction:column; gap:4px;">
+                    <b class="text-blue">Rp ${formatRupiah(t.total)}</b>
+                    <div>
+                        <span class="text-small text-blue" style="cursor:pointer; text-decoration:underline; margin-right:5px;" onclick="bukaEditTransaksi(${t.id})">Edit</span>
+                        <span class="text-small text-red" style="cursor:pointer; text-decoration:underline;" onclick="hapusTransaksi(${t.id})">Hapus</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ================= PELANGGAN =================
+    function tambahPelanggan(e) { e.preventDefault(); db.pelanggan.push({ id: Date.now(), nama: document.getElementById('namaPelanggan').value }); document.getElementById('namaPelanggan').value = ''; simpanData(); }
+    function hapusPelanggan(id) { if(confirm("Hapus pelanggan ini?")) { db.pelanggan = db.pelanggan.filter(p => p.id !== id); simpanData(); } }
+    function editPelangganList(id) {
+        let p = db.pelanggan.find(x => x.id === id);
+        if(!p) return;
+        let namaBaru = prompt("Edit Nama Pelanggan:", p.nama);
+        if(namaBaru && namaBaru.trim() !== "") { p.nama = namaBaru.trim(); simpanData(); }
+    }
+
+    // ================= UTANG / PIUTANG (ACCORDION & CICILAN) =================
+    function tambahUtang(e) {
+        e.preventDefault();
+        let pelId = document.getElementById('namaUtang').value;
+        let nmUtang = pelId !== "" ? db.pelanggan[pelId].nama : "Lainnya / Umum";
+        let nomUtang = getAngkaMurni(document.getElementById('nominalUtang').value);
+        db.utang.push({ id: Date.now(), jenis: document.getElementById('jenisUtang').value, nama: nmUtang, namaProduk: "Manual / Pinjaman", nominal: nomUtang, status: 'Belum Lunas', cicilan: [] });
+        document.getElementById('nominalUtang').value = ''; simpanData();
+    }
+    
+    function hapusUtang(id) { if(confirm("Hapus catatan utang/piutang ini?")) { db.utang = db.utang.filter(u => u.id !== id); simpanData(); } }
+    
+    function bayarCicilan(utangId) {
+        let u = db.utang.find(x => x.id === utangId);
+        if(!u) return;
+        let sisaUtang = u.nominal - (u.cicilan ? u.cicilan.reduce((s,c) => s + c.nominal, 0) : 0);
+        let inputNominal = prompt(`Masukkan Nominal Cicilan (Sisa: Rp ${formatRupiah(sisaUtang)}).\n\nKetik angka saja:`);
+        let nominalBayar = getAngkaMurni(inputNominal);
+        
+        if(nominalBayar > 0) {
+            if(!u.cicilan) u.cicilan = [];
+            let tgl = ambilTanggal();
+            u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nominalBayar });
+            
+            let totalTelahDibayar = u.cicilan.reduce((s,c) => s + c.nominal, 0);
+            if(totalTelahDibayar >= u.nominal) { u.status = 'Lunas'; alert("Cicilan masuk. Status otomatis Lunas!"); }
+            else { alert("Cicilan berhasil dicatat!"); }
+            simpanData();
+        }
+    }
+
+    function toggleAccordionUtang(idElemen) {
+        let el = document.getElementById('acc-' + idElemen);
+        el.classList.toggle('active');
+    }
+
+    // ================= KALKULATOR ALOKASI (BAGI HASIL) =================
+    function updateLabaAlokasi() {
+        let periode = document.getElementById('periodeAlokasi').value;
+        let kurangiPiutang = document.getElementById('cbKurangiPiutang').checked;
+        let kurangiUtang = document.getElementById('cbKurangiUtang').checked;
+        
+        let tglHariIni = ambilTanggal();
+        let blnIni = tglHariIni.substring(0, 7);
+        
+        // 1. Hitung Laba Kotor (Hanya transaksi, termasuk lunas/ngasbon karena ngasbon sudah terekam di transaksi)
+        let labaKotor = db.transaksi.reduce((sum, t) => {
+            let masukKriteria = false;
+            if(periode === 'semua') masukKriteria = true;
+            else if(periode === 'bulanIni') masukKriteria = t.tanggal.startsWith(blnIni);
+            else if(periode === 'hariIni') masukKriteria = t.tanggal === tglHariIni;
+            
+            return masukKriteria ? sum + t.untung : sum;
+        }, 0);
+
+        // 2. Kurangi Piutang (Jika dicentang)
+        if(kurangiPiutang) {
+            let totalPiutangBelumLunas = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((sum, u) => {
+                let terbayar = u.cicilan ? u.cicilan.reduce((s, c) => s + c.nominal, 0) : 0;
+                return sum + (u.nominal - terbayar);
+            }, 0);
+            labaKotor -= totalPiutangBelumLunas;
+        }
+
+        // 3. Kurangi Utang (Jika dicentang)
+        if(kurangiUtang) {
+            let totalUtangBelumLunas = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((sum, u) => {
+                let terbayar = u.cicilan ? u.cicilan.reduce((s, c) => s + c.nominal, 0) : 0;
+                return sum + (u.nominal - terbayar);
+            }, 0);
+            labaKotor -= totalUtangBelumLunas;
+        }
+
+        // Tampilkan Laba Bersih
+        let labaBersihTampil = labaKotor < 0 ? 0 : labaKotor; // Jangan minus di tampilan
+        document.getElementById('labaBersihAlokasi').innerText = formatRupiah(labaBersihTampil);
+        document.getElementById('labaBersihAlokasi').dataset.laba = labaBersihTampil;
+        
+        hitungBagiHasil();
+    }
+
+    function hitungBagiHasil() {
+        let labaTersedia = parseInt(document.getElementById('labaBersihAlokasi').dataset.laba || 0);
+        let pModal = parseInt(document.getElementById('persenModal').value || 0);
+        let pJajan = parseInt(document.getElementById('persenJajan').value || 0);
+        let pTabungan = parseInt(document.getElementById('persenTabungan').value || 0);
+        
+        let totalPersen = pModal + pJajan + pTabungan;
+        if(totalPersen > 0 && totalPersen !== 100) {
+            document.getElementById('peringatanPersen').style.display = 'block';
+        } else {
+            document.getElementById('peringatanPersen').style.display = 'none';
+        }
+
+        document.getElementById('hasilModal').innerText = formatRupiah((pModal / 100) * labaTersedia);
+        document.getElementById('hasilJajan').innerText = formatRupiah((pJajan / 100) * labaTersedia);
+        document.getElementById('hasilTabungan').innerText = formatRupiah((pTabungan / 100) * labaTersedia);
+    }
+
+    // ================= EKSPOR & IMPOR =================
+    function salinDataExcel() {
+        let textToCopy = ""; let header = [];
+        if(document.getElementById('exTgl').checked) header.push("Tanggal");
+        if(document.getElementById('exHari').checked) header.push("Hari");
+        if(document.getElementById('exPel').checked) header.push("Pelanggan");
+        if(document.getElementById('exProd').checked) header.push("Produk");
+        if(document.getElementById('exMod').checked) header.push("Modal");
+        if(document.getElementById('exJual').checked) header.push("Jual");
+        if(document.getElementById('exUnt').checked) header.push("Untung");
+        textToCopy += header.join("\t") + "\n"; 
+
+        db.transaksi.forEach(t => {
+            let row = []; 
+            if(document.getElementById('exTgl').checked) row.push(t.tanggal);
+            if(document.getElementById('exHari').checked) row.push(getNamaHari(t.tanggal));
+            if(document.getElementById('exPel').checked) row.push(t.pembeli);
+            if(document.getElementById('exProd').checked) row.push(t.namaProduk);
+            if(document.getElementById('exMod').checked) row.push(t.modal);
+            if(document.getElementById('exJual').checked) row.push(t.total);
+            if(document.getElementById('exUnt').checked) row.push(t.untung);
+            textToCopy += row.join("\t") + "\n";
+        });
+
+        navigator.clipboard.writeText(textToCopy).then(() => { alert("Berhasil disalin! Paste ke Excel."); }).catch(err => { alert("Gagal: " + err); });
+    }
+
+    function imporDataExcel() {
+        let inputText = document.getElementById('pasteExcelText').value.trim();
+        if(!inputText) return alert("Silakan Paste data!"); 
+        let baris = inputText.split('\n'); let jumlahBerhasil = 0;
+
+        baris.forEach(line => {
+            let kolom = line.split('\t'); if(kolom.length < 2) return; 
+            let tgl = ambilTanggal(), pel = "Umum", prod = "Produk Impor", mod = 0, jual = 0, unt = 0; let indexKolom = 0;
+            if(document.getElementById('imTgl').checked && kolom[indexKolom]) tgl = kolom[indexKolom++];
+            if(document.getElementById('imHari').checked && kolom[indexKolom]) indexKolom++; // Abaikan hari, otomatis digenerate
+            if(document.getElementById('imPel').checked && kolom[indexKolom]) pel = kolom[indexKolom++];
+            if(document.getElementById('imProd').checked && kolom[indexKolom]) prod = kolom[indexKolom++];
+            if(document.getElementById('imMod').checked && kolom[indexKolom]) mod = getAngkaMurni(kolom[indexKolom++]);
+            if(document.getElementById('imJual').checked && kolom[indexKolom]) jual = getAngkaMurni(kolom[indexKolom++]);
+            if(document.getElementById('imUnt').checked && kolom[indexKolom]) unt = getAngkaMurni(kolom[indexKolom++]);
+
+            if(jual > 0) {
+                db.transaksi.push({ id: Date.now() + Math.random(), tanggal: tgl, namaProduk: prod, jumlah: 1, modal: mod, total: jual, untung: unt || (jual - mod), status: 'Lunas', pembeli: pel, dompetId: 'none' });
+                jumlahBerhasil++;
+            }
+        });
+        document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${jumlahBerhasil} transaksi diimpor!`);
+    }
+
+    // ================= NAVIGASI & UPDATE DOM =================
+    function ubahTema(warna, simpan = true) { document.documentElement.style.setProperty('--primary', warna); if(simpan) { db.tema = warna; simpanData(); } }
+    function bukaHalaman(pageId, navElement, judul) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        document.getElementById('page-' + pageId).classList.add('active'); navElement.classList.add('active');
+        document.getElementById('judulHalaman').innerText = judul; if(pageId === 'menu') kembaliKeMenu();
+    }
+    function bukaSubHalaman(subId) {
+        document.querySelector('.menu-grid').style.display = 'none'; document.getElementById(subId).style.display = 'block';
+        let judul = "Menu";
+        if(subId === 'sub-pelanggan') judul = "Data Pelanggan";
+        if(subId === 'sub-utang') judul = "Utang & Piutang";
+        if(subId === 'sub-dompet') judul = "Dompet Manual";
+        if(subId === 'sub-riwayat') judul = "Riwayat Full Transaksi";
+        if(subId === 'sub-backup') judul = "Data Excel";
+        if(subId === 'sub-tema') judul = "Tema Aplikasi";
+        if(subId === 'sub-alokasi') { judul = "Bagi Hasil"; updateLabaAlokasi(); }
+        document.getElementById('judulHalaman').innerText = judul;
+    }
+    function kembaliKeMenu() { document.querySelectorAll('#page-menu .card').forEach(card => card.style.display = 'none'); document.querySelector('.menu-grid').style.display = 'grid'; document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; }
+
+    function updateSemuaTampilan() {
+        let totalSaldo = db.dompet.reduce((sum, d) => sum + parseInt(d.saldo || 0), 0);
+        document.getElementById('displaySaldo').innerText = formatRupiah(totalSaldo);
+
+        let tglHariIni = ambilTanggal(); let blnIni = tglHariIni.substring(0, 7); 
+        let omsetHarian = 0, labaHarian = 0, omsetBulanan = 0, labaBulanan = 0;
+        
+        db.transaksi.forEach(t => {
+            if(t.tanggal === tglHariIni) { omsetHarian += t.total; labaHarian += t.untung; }
+            if(t.tanggal.startsWith(blnIni)) { omsetBulanan += t.total; labaBulanan += t.untung; }
+        });
+
+        document.getElementById('rekapHarian').innerText = formatRupiah(omsetHarian); document.getElementById('labaHarian').innerText = formatRupiah(labaHarian);
+        document.getElementById('rekapBulanan').innerText = formatRupiah(omsetBulanan); document.getElementById('labaBulanan').innerText = formatRupiah(labaBulanan);
+
+        let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((sum, u) => sum + (u.nominal - (u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0)), 0);
+        let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((sum, u) => sum + (u.nominal - (u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0)), 0);
+        document.getElementById('rekapPiutang').innerText = formatRupiah(totalPiutang); document.getElementById('rekapUtang').innerText = formatRupiah(totalUtang);
+
+        let opsiPelanggan = `<option value="">Umum / Pelanggan Baru</option>` + db.pelanggan.map((p, i) => `<option value="${i}">${p.nama}</option>`).join('');
+        document.getElementById('namaUtang').innerHTML = opsiPelanggan;
+
+        renderDaftarTransaksiBeranda();
+        document.getElementById('listRiwayatFull').innerHTML = db.transaksi.slice().reverse().map(t => renderItemTransaksi(t)).join('') || '<div class="text-small" style="text-align:center; padding:10px;">Belum ada riwayat transaksi</div>';
+
+        document.getElementById('listProduk').innerHTML = db.produk.map(p => `
+            <div class="list-item flex-between" style="align-items: flex-start;">
+                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                    <input type="checkbox" class="check-produk" value="${p.id}" style="width: auto; margin-top: 4px;" onchange="cekStatusPilihSemua()">
+                    <div><b>${p.nama}</b><br><span class="text-small">Modal: Rp ${formatRupiah(p.modal)} | Jual: Rp ${formatRupiah(p.harga)}</span></div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <button class="btn-outline" style="width:auto; padding:4px 10px; margin:0; border-radius:5px; font-size: 11px;" onclick="editProduk(${p.id})">Edit</button>
+                    <button class="btn-red" style="width:auto; padding:4px 10px; margin:0; border-radius:5px; font-size: 11px;" onclick="hapusProduk(${p.id})">Hapus</button>
+                </div>
+            </div>
+        `).join('') || '<div class="text-small" style="text-align:center; padding:10px;">Produk masih kosong</div>';
+
+        // Update Daftar Pelanggan dengan tombol Edit
+        document.getElementById('listPelanggan').innerHTML = db.pelanggan.map(p => `
+            <div class="list-item flex-between">
+                <div><b>${p.nama}</b></div>
+                <div>
+                    <button class="btn-outline" style="width:auto; padding:5px 10px; margin:0 5px 0 0; border-radius:5px;" onclick="editPelangganList(${p.id})">Edit</button>
+                    <button class="btn-red" style="width:auto; padding:5px 10px; margin:0; border-radius:5px;" onclick="hapusPelanggan(${p.id})">Hapus</button>
+                </div>
             </div>
         `).join('');
 
-        document.getElementById('listProduk').innerHTML = db.produk.map(p => `<div class="list-item"><b>${p.nama}</b><br><span class="text-small">Jual: Rp ${formatRupiah(p.harga)}</span></div>`).join('');
-    }
+        // Update Daftar Utang dengan sistem Accordion dan Cicilan
+        document.getElementById('listUtang').innerHTML = db.utang.map(u => {
+            let totalDibayar = u.cicilan ? u.cicilan.reduce((s, c) => s + c.nominal, 0) : 0;
+            let sisaUtang = u.nominal - totalDibayar;
+            
+            let htmlCicilan = u.cicilan && u.cicilan.length > 0 
+                ? u.cicilan.map(c => `<div class="cicilan-item flex-between"><span>${c.hari}, ${c.tanggal}</span> <span class="text-green">+ Rp ${formatRupiah(c.nominal)}</span></div>`).join('')
+                : '<div class="text-small" style="color:#aaa;">Belum ada cicilan masuk.</div>';
 
-    function bukaHalaman(id, el, jdl) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('page-'+id).classList.add('active');
-        el.classList.add('active');
-        document.getElementById('judulHalaman').innerText = jdl;
+            return `
+            <div class="list-item">
+                <div class="accordion-header flex-between" onclick="toggleAccordionUtang(${u.id})">
+                    <div><b>${u.nama}</b> (${u.jenis})<br>
+                        ${u.namaProduk ? `<span class="text-small text-blue">📝 Pembelian: ${u.namaProduk}</span><br>` : ''}
+                        <span class="text-small">Total Pinjaman: Rp ${formatRupiah(u.nominal)}</span><br>
+                        <span class="${u.jenis === 'Piutang' ? 'text-blue' : 'text-red'}">Sisa: Rp ${formatRupiah(sisaUtang)}</span>
+                    </div>
+                    <div>
+                        <span class="text-small" style="background:#eee; padding:3px 8px; border-radius:10px;">${u.status} ⬇️</span>
+                    </div>
+                </div>
+                
+                <div id="acc-${u.id}" class="accordion-content">
+                    <div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;">
+                        <b class="text-small">Riwayat Pembayaran:</b>
+                        ${htmlCicilan}
+                    </div>
+                    <div class="flex-between">
+                        ${u.status !== 'Lunas' ? `<button class="btn-green" style="width:auto; padding:5px 15px; margin:0;" onclick="bayarCicilan(${u.id})">💳 Bayar Cicilan</button>` : '<span></span>'}
+                        <button class="btn-red" style="width:auto; padding:5px 10px; margin:0;" onclick="hapusUtang(${u.id})">🗑 Hapus Data</button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+        
+        // Dompet Manual
+        document.getElementById('listDompet').innerHTML = db.dompet.map(d => `
+            <div class="list-item flex-between">
+                <div><b>${d.nama}</b><br><span class="text-blue">Rp ${formatRupiah(d.saldo)}</span></div>
+                <div>
+                    <button class="btn-outline" style="width:auto; padding:5px 10px; margin:0 5px 0 0;" onclick="ubahSaldoDompet(${d.id})">Edit</button>
+                    <button class="btn-red" style="width:auto; padding:5px 10px; margin:0;" onclick="hapusDompetItem(${d.id})">Hapus</button>
+                </div>
+            </div>
+        `).join('');
     }
-
-    function bukaSubHalaman(id) {
-        document.querySelector('.menu-grid').style.display = 'none';
-        document.getElementById(id).style.display = 'block';
-    }
-
-    function kembaliKeMenu() {
-        document.querySelectorAll('#page-menu .card').forEach(c => c.style.display = 'none');
-        document.querySelector('.menu-grid').style.display = 'grid';
-    }
-
-    function ubahTema(w, s=true) {
-        document.documentElement.style.setProperty('--primary', w);
-        if(s) { db.tema = w; simpan(); }
-    }
-
-    // Modal Pencarian Sederhana
-    function bukaPencarian(t) { modePencarian = t; document.getElementById('modal-pencarian').classList.add('active'); filterPencarian(); }
-    function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
-    function filterPencarian() {
-        let k = document.getElementById('inputPencarian').value.toLowerCase();
-        let res = '';
-        if(modePencarian === 'produk') {
-            res = db.produk.map((p,i) => ({...p, idx:i})).filter(p => p.nama.toLowerCase().includes(k)).map(p => `<div class="search-item" onclick="pilihP(${p.idx},'${p.nama}')">${p.nama}</div>`).join('');
-        }
-        document.getElementById('listHasilPencarian').innerHTML = res;
-    }
-    function pilihP(i, n) { document.getElementById('kasirProdukId').value = i; document.getElementById('labelKasirProduk').innerText = n; tutupPencarian(); }
 </script>
 </body>
 </html>
