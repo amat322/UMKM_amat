@@ -53,8 +53,9 @@
         .check-item { font-size: 12px; display: flex; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 5px; border: 1px solid #eee;}
         .check-item input { width: auto; margin: 0 8px 0 0; }
 
-        .theme-options { display: flex; gap: 10px; justify-content: space-around; margin-top: 15px; }
-        .theme-circle { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .theme-options { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        .theme-circle { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .theme-circle:hover { transform: scale(1.1); }
         .theme-circle.active { border-color: #333; }
         
         ::-webkit-scrollbar { width: 4px; }
@@ -152,7 +153,7 @@
         
         <div class="card">
             <h4>Riwayat Lunas & Filter</h4>
-            <p class="text-small" style="margin-bottom: 10px; color: #666;">*Transaksi berstatus Ngasbon/Piutang otomatis pindah ke layar Utang/Piutang.</p>
+            <p class="text-small" style="margin-bottom: 10px; color: #666;">*Transaksi berstatus Ngasbon otomatis pindah ke layar Utang/Piutang.</p>
             <select id="filterWaktuBeranda" onchange="ubahFilterBeranda()" style="margin-top: 5px; font-weight: bold;">
                 <option value="semua">📂 Semua Transaksi (Lunas)</option>
                 <option value="harian">📅 Transaksi Harian (Hari Ini)</option>
@@ -292,27 +293,23 @@
         <div id="sub-tema" class="card" style="display:none;">
             <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Pilih Warna Tema</h4>
+            <p class="text-small" style="margin-bottom: 10px;">Pilih warna favoritmu agar aplikasi lebih segar!</p>
             <div class="theme-options">
-                <div class="theme-circle" style="background-color: #007bff;" onclick="ubahTema('#007bff')"></div>
-                <div class="theme-circle" style="background-color: #28a745;" onclick="ubahTema('#28a745')"></div>
-                <div class="theme-circle" style="background-color: #6f42c1;" onclick="ubahTema('#6f42c1')"></div>
-                <div class="theme-circle" style="background-color: #fd7e14;" onclick="ubahTema('#fd7e14')"></div>
-                <div class="theme-circle" style="background-color: #343a40;" onclick="ubahTema('#343a40')"></div>
-            </div>
+                <div class="theme-circle" style="background-color: #007bff;" onclick="ubahTema('#007bff')"></div> <div class="theme-circle" style="background-color: #28a745;" onclick="ubahTema('#28a745')"></div> <div class="theme-circle" style="background-color: #6f42c1;" onclick="ubahTema('#6f42c1')"></div> <div class="theme-circle" style="background-color: #fd7e14;" onclick="ubahTema('#fd7e14')"></div> <div class="theme-circle" style="background-color: #343a40;" onclick="ubahTema('#343a40')"></div> <div class="theme-circle" style="background-color: #dc3545;" onclick="ubahTema('#dc3545')"></div> <div class="theme-circle" style="background-color: #e83e8c;" onclick="ubahTema('#e83e8c')"></div> <div class="theme-circle" style="background-color: #20c997;" onclick="ubahTema('#20c997')"></div> <div class="theme-circle" style="background-color: #f39c12;" onclick="ubahTema('#f39c12')"></div> <div class="theme-circle" style="background-color: #17a2b8;" onclick="ubahTema('#17a2b8')"></div> <div class="theme-circle" style="background-color: #795548;" onclick="ubahTema('#795548')"></div> <div class="theme-circle" style="background-color: #607d8b;" onclick="ubahTema('#607d8b')"></div> </div>
         </div>
 
         <div id="sub-wa" class="card" style="display:none;">
             <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Pengaturan Struk WA</h4>
             <div style="background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #ffeeba;">
-                <b class="text-small" style="color:#856404;">Kode Otomatis (Akan berubah otomatis saat dikirim):</b><br>
+                <b class="text-small" style="color:#856404;">Kode Otomatis (Berubah otomatis saat dikirim):</b><br>
                 <span class="text-small" style="color:#856404;">
                     <b>[Nama]</b> = Nama Pelanggan<br>
-                    <b>[Produk]</b> = Daftar Jasa/Barang & Tanggalnya<br>
+                    <b>[Produk]</b> = Daftar Barang & Tanggalnya<br>
                     <b>[Total]</b> = Total Harga Jual<br>
-                    <b>[Modal]</b> = Total Modal (Khusus Bos)<br>
-                    <b>[Untung]</b> = Total Keuntungan (Khusus Bos)<br>
-                    <b>[Tgl]</b> = Tgl Hari Ini<br>
+                    <b>[Modal]</b> = Total Modal<br>
+                    <b>[Untung]</b> = Total Keuntungan<br>
+                    <b>[Tgl]</b> = Tgl Kirim WA<br>
                     <b>[Sisa]</b> = Sisa Tagihan (Khusus Utang)
                 </span>
             </div>
@@ -323,7 +320,7 @@
             <label class="text-small text-red"><b>2. Tagihan Utang/Ngasbon (Kirim ke Pelanggan)</b></label>
             <textarea id="tplTagihan" rows="4" placeholder="Ketik template di sini..."></textarea>
 
-            <label class="text-small text-green"><b>3. Laporan Transaksi (Kirim ke Bos / Diri Sendiri)</b></label>
+            <label class="text-small text-green"><b>3. Laporan Transaksi (Kirim ke Bos / Laporan Pribadi)</b></label>
             <textarea id="tplBos" rows="5" placeholder="Ketik template di sini..."></textarea>
 
             <div class="grid-2">
@@ -399,7 +396,7 @@
                 <input type="text" inputmode="numeric" pattern="[0-9.]*" id="nominalUtang" placeholder="Nominal Utang (Rp)" oninput="formatInputRupiah(event)" required>
                 <button type="submit">Catat Transaksi Utang</button>
             </form>
-            <h4 style="margin-top:15px; margin-bottom:10px;">Daftar Catatan (Otomatis Tergabung per Nama)</h4>
+            <h4 style="margin-top:15px; margin-bottom:10px;">Daftar Ngasbon (Otomatis Hilang Jika Lunas)</h4>
             <div id="listUtang"></div>
         </div>
 
@@ -427,9 +424,9 @@
             <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Tambah Dompet Baru</h4>
             <form onsubmit="tambahDompet(event)">
-                <input type="text" id="namaDompetBaru" placeholder="Nama Dompet (Misal: BCA, Kasir)" required>
+                <input type="text" id="namaDompetBaru" placeholder="Nama Dompet (Misal: BCA, Dana, Kasir)" required>
                 <input type="text" inputmode="numeric" pattern="[0-9.]*" id="saldoAwalDompet" placeholder="Saldo Awal (Rp)" oninput="formatInputRupiah(event)">
-                <button type="submit" class="btn-green">Tambah Dompet</button>
+                <button type="submit" class="btn-green">➕ Tambah Dompet</button>
             </form>
             <h4 style="margin-top:20px;">Daftar Dompet Tersedia</h4>
             <div id="listDompet"></div>
@@ -489,7 +486,7 @@
         if(!db.dompet || db.dompet.length === 0) { db.dompet = [{ id: Date.now(), nama: "Dompet Utama", saldo: 0 }]; simpanData(); }
         if(!db.alokasi) { db.alokasi = [{ id: Date.now(), nama: 'Putar Modal', persen: 100 }]; simpanData(); }
         
-        // Inisialisasi Template WA Default
+        // Inisialisasi Template WA Default (Hanya pakai Tgl)
         if(!db.templateWA) {
             db.templateWA = {
                 pelanggan: "Halo kak *[Nama]*,\nTerima kasih sudah order pada [Tgl].\n\n*Rincian Pesanan:*\n[Produk]\n\n*Total Tagihan: Rp [Total]*\nSemoga harinya menyenangkan! 🙏",
@@ -499,7 +496,7 @@
             simpanData();
         }
 
-        // Migrasi Data Utang Lama ke Sistem Rincian Tergabung
+        // Migrasi Data Utang Lama
         db.utang.forEach(u => {
             if(!u.rincianBarang) {
                 u.rincianBarang = [{ transId: u.transId || null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: u.namaProduk || "Pinjaman/Tagihan", nominal: u.nominal }];
@@ -530,6 +527,35 @@
     function formatRupiah(angka) { return parseInt(angka).toLocaleString('id-ID'); }
     function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function getNamaHari(tglString) { let d = new Date(tglString); return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][d.getDay()]; }
+
+    // ================= FUNGSI DOMPET MANUAL (Sudah Diperbaiki) =================
+    function tambahDompet(e) {
+        e.preventDefault();
+        let nama = document.getElementById('namaDompetBaru').value;
+        let saldo = getAngkaMurni(document.getElementById('saldoAwalDompet').value);
+        db.dompet.push({ id: Date.now(), nama: nama, saldo: saldo });
+        document.getElementById('namaDompetBaru').value = '';
+        document.getElementById('saldoAwalDompet').value = '';
+        simpanData();
+        alert("Dompet berhasil ditambahkan!");
+    }
+    
+    function hapusDompetItem(id) {
+        if(confirm("Yakin hapus dompet ini?")) {
+            db.dompet = db.dompet.filter(d => d.id !== id);
+            simpanData();
+        }
+    }
+    
+    function ubahSaldoDompet(id) {
+        let d = db.dompet.find(x => x.id === id);
+        if(!d) return;
+        let nominal = prompt("Masukkan Saldo Baru (Hanya Angka):", d.saldo);
+        if(nominal !== null) {
+            d.saldo = getAngkaMurni(nominal);
+            simpanData();
+        }
+    }
 
     // ================= FUNGSI PRODUK =================
     function simpanAtauEditProduk(e) {
@@ -759,7 +785,6 @@
             t.untung = t.total - t.modal;
             t.status = document.getElementById('editTransStatus').value;
 
-            // SINKRONISASI STATUS LUNAS/PIUTANG
             if (tempStatusLama === 'Lunas' && t.status === 'Piutang') { tambahUtangOtomatis(t); } 
             else if (tempStatusLama === 'Piutang' && t.status === 'Lunas') { hapusDariUtangOtomatis(t.id); } 
             else if (t.status === 'Piutang') { updateUtangOtomatis(t); }
@@ -824,13 +849,10 @@
                 tagihan: "Halo kak *[Nama]*,\nIzin mengingatkan untuk tagihan yang belum lunas (Update: [Tgl]).\n\n*Rincian Ngasbon:*\n[Produk]\n\n*Sisa Tagihan: Rp [Sisa]*\nMohon bantuannya ya kak, terima kasih! 🙏",
                 bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*"
             };
-            
             document.getElementById('tplPelanggan').value = db.templateWA.pelanggan;
             document.getElementById('tplTagihan').value = db.templateWA.tagihan;
             document.getElementById('tplBos').value = db.templateWA.bos;
-            
-            simpanData();
-            alert("Template WA dikembalikan ke bawaan awal (dengan tanggal)!");
+            simpanData(); alert("Template WA dikembalikan ke bawaan awal!");
         }
     }
 
@@ -851,13 +873,10 @@
     function prosesKirimWA(jenis, arrId) {
         let dataTerpilih = db.transaksi.filter(t => arrId.includes(t.id));
         let namaPelanggan = dataTerpilih[0].pembeli || 'Pelanggan'; 
-        
         let listProduk = dataTerpilih.map(t => `- [${getNamaHari(t.tanggal)}, ${t.tanggal}] ${t.namaProduk} (Rp ${formatRupiah(t.total)})`).join('\n');
-        
         let totalJual = dataTerpilih.reduce((s, t) => s + t.total, 0);
         let totalModal = dataTerpilih.reduce((s, t) => s + t.modal, 0);
         let totalUntung = dataTerpilih.reduce((s, t) => s + t.untung, 0);
-
         let pesan = jenis === 'pelanggan' ? db.templateWA.pelanggan : db.templateWA.bos;
         
         pesan = pesan.replace(/\[Nama\]/gi, namaPelanggan)
@@ -875,10 +894,8 @@
     function kirimWATagihan(utangId) {
         let u = db.utang.find(x => x.id === utangId);
         if(!u) return;
-        
         let terbayar = u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0;
         let sisa = u.nominal - terbayar;
-        
         let rincianTeks = u.rincianBarang && u.rincianBarang.length > 0 
             ? u.rincianBarang.map(r => `- [${r.hari}, ${r.tanggal}] ${r.produk} (Rp ${formatRupiah(r.nominal)})`).join('\n') 
             : `- ${u.namaProduk}`;
@@ -899,31 +916,21 @@
     // ================= PELANGGAN =================
     function tambahPelanggan(e) { e.preventDefault(); db.pelanggan.push({ id: Date.now(), nama: document.getElementById('namaPelanggan').value }); document.getElementById('namaPelanggan').value = ''; simpanData(); }
     function hapusPelanggan(id) { if(confirm("Hapus pelanggan ini?")) { db.pelanggan = db.pelanggan.filter(p => p.id !== id); simpanData(); } }
-    function editPelangganList(id) {
-        let p = db.pelanggan.find(x => x.id === id);
-        if(!p) return;
-        let namaBaru = prompt("Edit Nama Pelanggan:", p.nama);
-        if(namaBaru && namaBaru.trim() !== "") { p.nama = namaBaru.trim(); simpanData(); }
-    }
+    function editPelangganList(id) { let p = db.pelanggan.find(x => x.id === id); if(!p) return; let namaBaru = prompt("Edit Nama Pelanggan:", p.nama); if(namaBaru && namaBaru.trim() !== "") { p.nama = namaBaru.trim(); simpanData(); } }
 
-    // ================= UTANG / PIUTANG (ACCORDION & CICILAN) =================
+    // ================= UTANG / PIUTANG (ACCORDION, CICIL & LUNAS SEKALIGUS) =================
     function tambahUtang(e) {
         e.preventDefault();
         let pelId = document.getElementById('namaUtang').value;
         let nmUtang = pelId !== "" ? db.pelanggan[pelId].nama : "Lainnya / Umum";
         let nomUtang = getAngkaMurni(document.getElementById('nominalUtang').value);
         let jenisU = document.getElementById('jenisUtang').value;
-        
         let existing = db.utang.find(u => u.nama === nmUtang && u.jenis === jenisU && u.status !== 'Lunas');
         let rincian = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Pinjaman/Manual", nominal: nomUtang };
         
-        if(existing) {
-            existing.nominal += nomUtang;
-            if(!existing.rincianBarang) existing.rincianBarang = [];
-            existing.rincianBarang.push(rincian);
-        } else {
-            db.utang.push({ id: Date.now(), transId: null, jenis: jenisU, nama: nmUtang, namaProduk: "Manual", nominal: nomUtang, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] });
-        }
+        if(existing) { existing.nominal += nomUtang; if(!existing.rincianBarang) existing.rincianBarang = []; existing.rincianBarang.push(rincian); } 
+        else { db.utang.push({ id: Date.now(), transId: null, jenis: jenisU, nama: nmUtang, namaProduk: "Manual", nominal: nomUtang, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] }); }
+        
         document.getElementById('nominalUtang').value = ''; simpanData();
     }
     
@@ -938,20 +945,34 @@
         
         if(nominalBayar > 0) {
             if(!u.cicilan) u.cicilan = [];
-            let tgl = ambilTanggal();
-            u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nominalBayar });
+            u.cicilan.push({ id: Date.now(), tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), nominal: nominalBayar });
             
             let totalTelahDibayar = u.cicilan.reduce((s,c) => s + c.nominal, 0);
             if(totalTelahDibayar >= u.nominal) { 
                 u.status = 'Lunas'; 
-                if(u.rincianBarang) {
-                    u.rincianBarang.forEach(r => {
-                        if(r.transId) { let tData = db.transaksi.find(t => t.id === r.transId); if(tData) tData.status = 'Lunas'; }
-                    });
-                }
-                alert("Cicilan lunas! Status Transaksi otomatis di-update."); 
+                if(u.rincianBarang) { u.rincianBarang.forEach(r => { if(r.transId) { let tData = db.transaksi.find(t => t.id === r.transId); if(tData) tData.status = 'Lunas'; } }); }
+                alert("Cicilan lunas! Catatan otomatis dihilangkan dari daftar Ngasbon."); 
             } else { alert("Cicilan berhasil dicatat!"); }
             simpanData();
+        }
+    }
+
+    function lunasSekaligus(utangId) {
+        if(confirm("Tandai pelanggan ini LUNAS SEPENUHNYA? Data akan hilang dari layar ini.")) {
+            let u = db.utang.find(x => x.id === utangId);
+            if(!u) return;
+            let terbayar = u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0;
+            let sisa = u.nominal - terbayar;
+            
+            if(sisa > 0) {
+                if(!u.cicilan) u.cicilan = [];
+                u.cicilan.push({ id: Date.now(), tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), nominal: sisa });
+            }
+            
+            u.status = 'Lunas';
+            if(u.rincianBarang) { u.rincianBarang.forEach(r => { if(r.transId) { let tData = db.transaksi.find(t => t.id === r.transId); if(tData) tData.status = 'Lunas'; } }); }
+            simpanData();
+            alert("Berhasil! Utang lunas sepenuhnya.");
         }
     }
 
@@ -960,7 +981,7 @@
         el.classList.toggle('active');
     }
 
-    // ================= KALKULATOR ALOKASI (DINAMIS) =================
+    // ================= KALKULATOR ALOKASI =================
     function renderAlokasiList() {
         let html = db.alokasi.map(a => `
             <div style="background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:10px;">
@@ -976,7 +997,6 @@
                 </div>
             </div>
         `).join('');
-        
         document.getElementById('listAlokasiDinamis').innerHTML = html || '<div class="text-small" style="text-align:center; margin-bottom:15px;">Belum ada pos pembagian. Klik tombol "Tambah Pos".</div>';
         hitungBagiHasil();
     }
@@ -1159,7 +1179,10 @@
             </div>
         `).join('');
 
-        document.getElementById('listUtang').innerHTML = db.utang.map(u => {
+        // HANYA RENDER UTANG YANG BELUM LUNAS (Agar otomatis hilang jika sudah lunas)
+        let utangBelumLunas = db.utang.filter(u => u.status !== 'Lunas');
+        
+        document.getElementById('listUtang').innerHTML = utangBelumLunas.map(u => {
             let totalDibayar = u.cicilan ? u.cicilan.reduce((s, c) => s + c.nominal, 0) : 0;
             let sisaUtang = u.nominal - totalDibayar;
             
@@ -1194,15 +1217,16 @@
                         <b class="text-small">Riwayat Pembayaran:</b>
                         ${htmlCicilan}
                     </div>
-                    <div class="flex-between">
-                        ${u.status !== 'Lunas' ? `<button class="btn-green" style="width:auto; padding:5px 15px; margin:0;" onclick="bayarCicilan(${u.id})">💳 Bayar</button>` : '<span></span>'}
-                        <button class="btn-wa" style="width:auto; padding:5px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan(${u.id})">📱 WA Tagihan</button>
-                        <button class="btn-red" style="width:auto; padding:5px 10px; margin:0;" onclick="hapusUtang(${u.id})">🗑 Hapus</button>
+                    <div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;">
+                        <button class="btn-warning" style="width:auto; flex:1; padding:5px 10px; margin:0; font-size:11px;" onclick="bayarCicilan(${u.id})">💳 Cicil</button>
+                        <button class="btn-green" style="width:auto; flex:1; padding:5px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus(${u.id})">✅ Lunas</button>
+                        <button class="btn-wa" style="width:auto; padding:5px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan(${u.id})">📱 WA</button>
+                        <button class="btn-red" style="width:auto; padding:5px 10px; margin:0;" onclick="hapusUtang(${u.id})">🗑</button>
                     </div>
                 </div>
             </div>
             `;
-        }).join('');
+        }).join('') || '<div class="text-small" style="text-align:center; padding:15px;">Semua catatan utang sudah bersih / lunas! 🎉</div>';
         
         document.getElementById('listDompet').innerHTML = db.dompet.map(d => `
             <div class="list-item flex-between">
