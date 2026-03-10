@@ -219,12 +219,21 @@
             <h4>Catat Utang / Piutang Baru</h4>
             <p class="text-small" style="margin-bottom:10px;">Catat manual di sini. Jika lunas, datanya otomatis masuk ke Beranda.</p>
             <form onsubmit="tambahUtang(event)">
+                <label class="text-small">Pilih Pelanggan:</label>
+                <div class="search-select" onclick="bukaPencarian('pelanggan-utang')">
+                    <span id="labelUtangPelanggan"><b>Umum / Pelanggan Baru</b></span>
+                </div>
+                <input type="hidden" id="utangPelangganId" value="">
+                
+                <label class="text-small">Jenis Transaksi:</label>
                 <select id="jenisUtang" required>
                     <option value="Piutang">Orang Ngutang (Piutang)</option>
                     <option value="Utang">Saya Ngutang (Utang)</option>
                 </select>
-                <select id="namaUtang" required></select>
-                <input type="text" inputmode="numeric" pattern="[0-9.]*" id="nominalUtang" placeholder="Nominal Utang (Rp)" oninput="formatInputRupiah(event)" required>
+
+                <label class="text-small">Nominal Utang:</label>
+                <input type="text" inputmode="numeric" pattern="[0-9.]*" id="nominalUtang" placeholder="Nominal (Rp)" oninput="formatInputRupiah(event)" required>
+                
                 <button type="submit" class="btn-green">Catat Transaksi Utang</button>
             </form>
         </div>
@@ -264,7 +273,7 @@
                 <input type="number" inputmode="numeric" id="kasirJumlah" placeholder="Jumlah" value="1" required>
                 
                 <label class="text-small">Pelanggan:</label>
-                <div class="search-select" onclick="bukaPencarian('pelanggan')">
+                <div class="search-select" onclick="bukaPencarian('pelanggan-kasir')">
                     <span id="labelKasirPelanggan"><b>Umum / Pelanggan Baru</b></span>
                 </div>
                 <input type="hidden" id="kasirPelangganId" value="">
@@ -625,7 +634,12 @@
     }
 
     // ================= PENCARIAN & KASIR =================
-    function bukaPencarian(tipe) { modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active'); document.getElementById('judulPencarian').innerText = tipe === 'produk' ? 'Pencarian Produk' : 'Pencarian Pelanggan'; let inputEl = document.getElementById('inputPencarian'); inputEl.value = ''; filterPencarian(); setTimeout(() => inputEl.focus(), 100); }
+    function bukaPencarian(tipe) { 
+        modePencarian = tipe; 
+        document.getElementById('modal-pencarian').classList.add('active'); 
+        document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; 
+        let inputEl = document.getElementById('inputPencarian'); inputEl.value = ''; filterPencarian(); setTimeout(() => inputEl.focus(), 100); 
+    }
     function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
     function filterPencarian() {
         let keyword = document.getElementById('inputPencarian').value.toLowerCase(); let htmlList = '';
@@ -634,7 +648,7 @@
             if(dataSaring.length > 0) {
                 htmlList = dataSaring.map(p => { let namaAman = p.nama.replace(/'/g, "\\'"); return `<div class="search-item" onclick="pilihProduk(${p.idAsli}, '${namaAman}', ${p.modal || 0}, ${p.harga || 0})"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`; }).join('');
             } else { htmlList = `<div class="text-small" style="text-align:center; padding: 20px;">Pencarian tidak ditemukan. Ketik langsung untuk menambah otomatis.</div>`; }
-        } else if (modePencarian === 'pelanggan') {
+        } else if (modePencarian.startsWith('pelanggan')) {
             let dataSaring = db.pelanggan.map((p, i) => ({...p, idAsli: i})).filter(p => p.nama.toLowerCase().includes(keyword));
             if ("umum pelanggan baru".includes(keyword) || keyword === "") htmlList += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             htmlList += dataSaring.map(p => `<div class="search-item" onclick="pilihPelanggan(${p.idAsli}, '${p.nama}')"><b>${p.nama}</b></div>`).join('');
@@ -642,7 +656,17 @@
         document.getElementById('listHasilPencarian').innerHTML = htmlList;
     }
     function pilihProduk(index, nama, modal, harga) { document.getElementById('kasirNamaProduk').value = nama; document.getElementById('kasirHargaModal').value = formatRupiah(modal); document.getElementById('kasirHargaJual').value = formatRupiah(harga); tutupPencarian(); }
-    function pilihPelanggan(index, nama) { document.getElementById('kasirPelangganId').value = index; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; tutupPencarian(); }
+    
+    function pilihPelanggan(index, nama) { 
+        if (modePencarian === 'pelanggan-kasir') {
+            document.getElementById('kasirPelangganId').value = index; 
+            document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-utang') {
+            document.getElementById('utangPelangganId').value = index; 
+            document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
+        }
+        tutupPencarian(); 
+    }
 
     function tambahUtangOtomatis(transaksiData) {
         let existing = db.utang.find(u => u.nama === transaksiData.pembeli && u.jenis === 'Piutang' && u.status !== 'Lunas');
@@ -819,12 +843,25 @@
     // ================= UTANG / PIUTANG (SYNC KE BERANDA) =================
     function tambahUtang(e) {
         e.preventDefault();
-        let pelId = document.getElementById('namaUtang').value; let nmUtang = pelId !== "" ? db.pelanggan[pelId].nama : "Lainnya / Umum"; let nomUtang = getAngkaMurni(document.getElementById('nominalUtang').value); let jenisU = document.getElementById('jenisUtang').value;
+        let pelId = document.getElementById('utangPelangganId').value;
+        let nmUtang = pelId !== "" ? db.pelanggan[pelId].nama : "Umum / Pelanggan Baru";
+        let nomUtang = getAngkaMurni(document.getElementById('nominalUtang').value);
+        let jenisU = document.getElementById('jenisUtang').value;
         let existing = db.utang.find(u => u.nama === nmUtang && u.jenis === jenisU && u.status !== 'Lunas');
         let rincian = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Pinjaman/Manual", nominal: nomUtang };
-        if(existing) { existing.nominal += nomUtang; if(!existing.rincianBarang) existing.rincianBarang = []; existing.rincianBarang.push(rincian); } 
-        else { db.utang.push({ id: Date.now(), transId: null, jenis: jenisU, nama: nmUtang, namaProduk: "Manual", nominal: nomUtang, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] }); }
-        document.getElementById('nominalUtang').value = ''; simpanData();
+        
+        if(existing) { 
+            existing.nominal += nomUtang; 
+            if(!existing.rincianBarang) existing.rincianBarang = []; 
+            existing.rincianBarang.push(rincian); 
+        } else { 
+            db.utang.push({ id: Date.now(), transId: null, jenis: jenisU, nama: nmUtang, namaProduk: "Manual", nominal: nomUtang, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] }); 
+        }
+        
+        document.getElementById('nominalUtang').value = ''; 
+        document.getElementById('utangPelangganId').value = '';
+        document.getElementById('labelUtangPelanggan').innerHTML = '<b>Umum / Pelanggan Baru</b>';
+        simpanData();
     }
     function hapusUtang(id) { if(confirm("Hapus seluruh catatan utang pelanggan ini?")) { db.utang = db.utang.filter(u => u.id !== id); simpanData(); } }
 
@@ -866,7 +903,7 @@
             u.cicilan.push({ id: Date.now(), tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), nominal: nominalBayar });
             let totalTelahDibayar = u.cicilan.reduce((s,c) => s + c.nominal, 0);
             if(totalTelahDibayar >= u.nominal) { 
-                selesaikanUtang(u); // Jalankan fungsi sinkronisasi
+                selesaikanUtang(u); 
                 alert("Cicilan lunas! Catatan masuk sebagai omset di Beranda."); 
             } else { alert("Cicilan berhasil dicatat!"); }
             simpanData();
@@ -878,7 +915,7 @@
             let u = db.utang.find(x => x.id === utangId); if(!u) return;
             let terbayar = u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0; let sisa = u.nominal - terbayar;
             if(sisa > 0) { if(!u.cicilan) u.cicilan = []; u.cicilan.push({ id: Date.now(), tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), nominal: sisa }); }
-            selesaikanUtang(u); // Jalankan fungsi sinkronisasi
+            selesaikanUtang(u); 
             simpanData(); alert("Berhasil! Utang lunas dan masuk ke Beranda.");
         }
     }
@@ -1002,8 +1039,6 @@
         let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((sum, u) => sum + (u.nominal - (u.cicilan ? u.cicilan.reduce((s,c) => s+c.nominal, 0) : 0)), 0);
         document.getElementById('rekapPiutang').innerText = formatRupiah(totalPiutang); document.getElementById('rekapUtang').innerText = formatRupiah(totalUtang);
 
-        let opsiPelanggan = `<option value="">Umum / Pelanggan Baru</option>` + db.pelanggan.map((p, i) => `<option value="${i}">${p.nama}</option>`).join(''); document.getElementById('namaUtang').innerHTML = opsiPelanggan;
-
         renderDaftarTransaksiBeranda();
         document.getElementById('listRiwayatFull').innerHTML = db.transaksi.slice().reverse().map(t => renderItemTransaksi(t, 'riwayat')).join('') || '<div class="text-small" style="text-align:center; padding:10px;">Belum ada riwayat transaksi</div>';
 
@@ -1057,4 +1092,4 @@
     }
 </script>
 </body>
-                </html>
+                                                                                              </html>
