@@ -288,9 +288,39 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-alokasi')"><span>📊</span>Bagi Hasil</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-wa')"><span>📱</span>Struk WA</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
-            <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-portal')"><span>⚖️</span>Simulasi Kas</div> <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div>
+        </div>
+
+        <div id="sub-portal" class="card" style="display:none;">
+            <button class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>⚖️ Portal Dompet (Simulasi Kas)</h4>
+            <p class="text-small" style="margin-bottom: 15px;">Cek total kekayaan bersih dengan menghitung kasbon dan utang.</p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+                <div class="flex-between" style="margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 10px;">
+                    <span style="color: #555; font-size: 13px;">Saldo Asli (Total Dompet):</span>
+                    <b style="font-size: 15px;" class="text-blue">Rp <span id="portal-saldo-asli">0</span></b>
+                </div>
+                
+                <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 10px; cursor: pointer; background: #e8f5e9; padding: 8px; border-radius: 5px; border: 1px solid #c8e6c9;">
+                    <input type="checkbox" id="cb-portal-piutang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
+                    <span style="flex: 1;">➕ Uang di Luar (Kasbon)</span>
+                    <b class="text-green">Rp <span id="portal-angka-piutang">0</span></b>
+                </label>
+                
+                <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; cursor: pointer; background: #ffebee; padding: 8px; border-radius: 5px; border: 1px solid #ffcdd2;">
+                    <input type="checkbox" id="cb-portal-utang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
+                    <span style="flex: 1;">➖ Utang Saya (Ke Orang)</span>
+                    <b class="text-red">Rp <span id="portal-angka-utang">0</span></b>
+                </label>
+            </div>
+
+            <div style="background: #eef2f5; padding: 15px; border-radius: 8px; border: 1px solid #d1e3f8; text-align: center;">
+                <h4 style="color: #555; margin-bottom: 5px;">Total Kekayaan Bersih:</h4>
+                <h2 class="text-blue" style="font-size: 24px; margin: 0;">Rp <span id="portal-total-akhir">0</span></h2>
+            </div>
         </div>
 
         <div id="sub-dompet" class="card" style="display:none;">
@@ -507,6 +537,43 @@
     function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function getNamaHari(tglString) { return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][new Date(tglString).getDay()]; }
     function salinTeks(teks) { navigator.clipboard.writeText(teks).then(() => { alert("Disalin: " + teks); }).catch(e => { alert("Gagal: " + e); }); }
+
+    // ================= FUNGSI SIMULASI KAS (PORTAL DOMPET) =================
+    function hitungPortalDompet() {
+        // 1. Ambil Total Saldo Dompet Asli
+        let saldoAsli = db.dompet.reduce((s, d) => s + parseInt(d.saldo||0), 0);
+        
+        // 2. Ambil Total Uang di Luar (Piutang)
+        let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((s, u) => s + (u.nominal - (u.cicilan ? u.cicilan.reduce((a,c) => a+c.nominal, 0) : 0)), 0);
+        
+        // 3. Ambil Total Utang ke Orang
+        let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((s, u) => s + (u.nominal - (u.cicilan ? u.cicilan.reduce((a,c) => a+c.nominal, 0) : 0)), 0);
+
+        // Update teks di layar
+        document.getElementById('portal-saldo-asli').innerText = formatRupiah(saldoAsli);
+        document.getElementById('portal-angka-piutang').innerText = formatRupiah(totalPiutang);
+        document.getElementById('portal-angka-utang').innerText = formatRupiah(totalUtang);
+
+        // Kalkulasi Akhir
+        let totalAkhir = saldoAsli;
+        if (document.getElementById('cb-portal-piutang').checked) {
+            totalAkhir += totalPiutang;
+        }
+        if (document.getElementById('cb-portal-utang').checked) {
+            totalAkhir -= totalUtang;
+        }
+
+        let elTotal = document.getElementById('portal-total-akhir');
+        elTotal.innerText = formatRupiah(totalAkhir);
+        
+        // Ubah warna kalau minus
+        if (totalAkhir < 0) {
+            elTotal.className = "text-red";
+        } else {
+            elTotal.className = "text-blue";
+        }
+    }
+
 
     // ================= DOMPET & CASH OPNAME =================
     function tambahDompet(e) { 
@@ -947,7 +1014,9 @@
     
     function bukaSubHalaman(sub) { 
         document.querySelector('.menu-grid').style.display = 'none'; document.getElementById(sub).style.display = 'block'; 
-        let jd = "Menu"; if(sub==='sub-pelanggan') jd="Data Pelanggan"; if(sub==='sub-dompet') jd="Dompet Manual"; if(sub==='sub-riwayat') jd="Riwayat Full Transaksi"; if(sub==='sub-backup') jd="Data Excel"; if(sub==='sub-tema') jd="Tema Aplikasi"; if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } if(sub==='sub-wa') { jd="Struk WA"; document.getElementById('tplPelanggan').value=db.templateWA.pelanggan; document.getElementById('tplTagihan').value=db.templateWA.tagihan; document.getElementById('tplBos').value=db.templateWA.bos; } document.getElementById('judulHalaman').innerText = jd; 
+        let jd = "Menu"; if(sub==='sub-pelanggan') jd="Data Pelanggan"; if(sub==='sub-dompet') jd="Dompet Manual"; if(sub==='sub-riwayat') jd="Riwayat Full Transaksi"; if(sub==='sub-backup') jd="Data Excel"; if(sub==='sub-tema') jd="Tema Aplikasi"; if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } if(sub==='sub-wa') { jd="Struk WA"; document.getElementById('tplPelanggan').value=db.templateWA.pelanggan; document.getElementById('tplTagihan').value=db.templateWA.tagihan; document.getElementById('tplBos').value=db.templateWA.bos; } 
+        if(sub==='sub-portal') { jd="Portal Dompet"; hitungPortalDompet(); } // <-- Trigger kalkulasi saat portal dibuka
+        document.getElementById('judulHalaman').innerText = jd; 
     }
     
     function kembaliKeMenu() { 
