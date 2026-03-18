@@ -9,7 +9,7 @@
         :root { --primary: #007bff; --bg-color: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: var(--bg-color); padding-bottom: 70px; transition: background 0.3s; }
-        .app-container { max-width: 480px; margin: 0 auto; background-color: var(--bg-color); min-height: 100vh; position: relative; }
+        .app-container { max-width: 480px; margin: 0 auto; background-color: var(--bg-color); min-height: 100vh; position: relative; overflow-x: hidden; }
         
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 0 0 20px 20px; text-align: center; transition: background 0.3s; }
         .saldo-badge { background: rgba(255,255,255,0.2); display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 10px; font-weight: bold; }
@@ -82,6 +82,8 @@
         .table-excel th, .table-excel td { border: 1px solid #ddd; padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -94,7 +96,7 @@
         .kat-content { display: none; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 0 0 8px 8px; margin-top: -5px; margin-bottom: 15px; }
         .kat-content.active { display: block; }
         
-        /* Struk Thermal */
+        /* Desain Struk */
         .struk-kertas { background: #fff; color: #000; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; text-align: left; width: 100%; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
     </style>
@@ -146,7 +148,7 @@
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">🗂️ Pindah Folder Kategori</h4>
             <p class="text-small" style="margin-bottom: 15px;">Pindahkan produk yang dicentang ke folder:</p>
-            <select id="selectPindahKat" style="font-weight:bold; background:#f0f8ff;"></select>
+            <select id="selectPindahKat" style="font-weight:bold; background:#f0f8ff; width:100%; padding:10px; border-radius:8px;"></select>
             <div class="grid-2" style="margin-top: 15px;">
                 <button type="button" class="btn-green" onclick="eksekusiPindahKategoriMassal()">Pindahkan</button>
                 <button type="button" class="btn-red" onclick="tutupModalPindahKategori()">Batal</button>
@@ -204,7 +206,7 @@
                     <button type="button" class="btn-outline" style="width: auto; margin-bottom: 0; padding: 10px 15px;" onclick="bukaPencarian('produk')">🔍 Cari</button>
                 </div>
                 <label style="display:flex; align-items:center; font-size:11px; margin-bottom: 15px; background: #fff3cd; padding: 6px 10px; border-radius: 6px; border: 1px solid #ffeeba;">
-                    <input type="checkbox" id="kasirSimpanProduk" checked style="width:auto; margin:0 8px 0 0;"><b style="color: #856404;">Simpan permanen ke Data Produk</b>
+                    <input type="checkbox" id="kasirSimpanProduk" checked style="width:auto; margin:0 8px 0 0;"><b style="color: #856404;">Simpan permanen ke Folder Umum</b>
                 </label>
                 <div class="grid-2">
                     <div><label class="text-small">Harga Modal:</label><input type="text" inputmode="numeric" id="kasirHargaModal" placeholder="Rp 0" oninput="formatInputRupiah(event)"></div>
@@ -216,7 +218,6 @@
                 <input type="hidden" id="kasirPelangganId" value="">
                 <label class="text-small">Status Pembayaran:</label>
                 <select id="kasirStatus"><option value="Lunas">Lunas</option><option value="Piutang">Ngasbon / Piutang</option></select>
-                
                 <button type="button" class="btn-green" style="margin-top: 15px; font-size: 16px;" onclick="eksekusiKasir()">💳 Proses Pembayaran</button>
             </div>
         </div>
@@ -317,7 +318,6 @@
                 <select id="jenisUtang"><option value="Piutang">Orang Ngutang (Piutang)</option><option value="Utang">Saya Ngutang (Utang)</option></select>
                 <label class="text-small">Nominal Utang:</label>
                 <input type="text" inputmode="numeric" id="nominalUtang" placeholder="Nominal (Rp)" oninput="formatInputRupiah(event)">
-                
                 <button type="button" class="btn-green" onclick="eksekusiTambahUtang()">Catat Transaksi Kasbon</button>
             </div>
         </div>
@@ -582,7 +582,7 @@
     function getNamaHari(tglString) { return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][new Date(tglString).getDay()]; }
     function salinTeks(teks) { navigator.clipboard.writeText(teks).then(() => { alert("Disalin: " + teks); }).catch(e => { alert("Gagal: " + e); }); }
 
-    // ================= FUNGSI KASIR (ANTI RELOAD) =================
+    // ================= FUNGSI KASIR =================
     function eksekusiKasir() {
         try {
             let tgl = document.getElementById('kasirTanggal').value;
@@ -624,7 +624,7 @@
         } catch(err) { alert("Error Kasir: " + err.message); }
     }
 
-    // ================= FUNGSI UTANG/PIUTANG (ANTI RELOAD) =================
+    // ================= FUNGSI UTANG/PIUTANG =================
     function eksekusiTambahUtang() {
         try {
             let nmUtang = document.getElementById('labelUtangPelanggan').innerText.trim();
@@ -784,7 +784,7 @@
         let d = db.dompet.find(x => x.id === idDompetAktif);
         document.getElementById('daftar-pecahan-dinamis').innerHTML = d.pecahan.map((p, idx) => `<div class="pecahan-item"><div style="flex:1;"><span style="font-size:14px; font-weight:bold; color: #333;">${p.nama}</span></div><div><div style="display:flex; align-items:center;"><span style="font-size:13px; margin-right:5px; color:#666;">Total Rp</span><input type="text" inputmode="numeric" pattern="[0-9]*" value="${p.nilai === 0 ? '' : formatRupiah(p.nilai)}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)"></div><div class="text-bantuan" id="bantuan-pecahan-${idx}">Terbaca: Rp ${formatRupiah(p.nilai)}</div></div><button type="button" class="btn-red" style="width:32px; padding:6px; margin-left:10px; font-size:12px; border-radius:4px;" onclick="hapusBarisPecahan(${idx})">X</button></div>`).join(''); hitungOtomatisPecahan();
     }
-    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan (Contoh: Koin Rp 500, Kertas Rp 10.000):"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => x.id === idDompetAktif); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
+    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => x.id === idDompetAktif); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
     function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => x.id === idDompetAktif); d.pecahan.splice(idx, 1); renderPecahanDompet(); } }
     function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => x.id === idDompetAktif); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); }
     function hitungOtomatisPecahan() {
@@ -1042,4 +1042,4 @@
     }
 </script>
 </body>
-        </html>
+</html>
