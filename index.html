@@ -86,6 +86,8 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -688,7 +690,7 @@
         let wrn = document.getElementById('inputWarnaTema').value; ubahTema(wrn, true); alert("Tema warna berhasil disimpan!"); kembaliKeMenu();
     }
 
-    // ================= STRUK THERMAL & CETAK PDF =================
+    // ================= STRUK THERMAL & CETAK PDF ANTI-RUSAK =================
     function bukaStruk(id) {
         let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return;
         document.getElementById('struk-info').innerHTML = `Tgl: ${formatTanggalIndo(t.tanggal)}<br>Plg: ${t.pembeli}`;
@@ -700,25 +702,63 @@
         let area = document.getElementById('area-struk');
         html2canvas(area).then(canvas => { let link = document.createElement('a'); link.download = `Struk-${Date.now()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
     }
+    
     function downloadPDFRiwayat(tipe) {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.setFontSize(14); doc.text("Laporan Transaksi", 14, 15);
-        
-        let dataArr = [];
-        if(tipe === 'beranda') {
-            let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
-            let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-            dataArr = db.transaksi.filter(t => {
-                if(t.status !== 'Lunas') return false; 
-                if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
-                if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
-                return true;
-            }).slice().reverse();
-        } else { dataArr = db.transaksi.slice().reverse(); }
+        try {
+            const { jsPDF } = window.jspdf; 
+            const doc = new jsPDF();
+            doc.setFontSize(14); 
+            doc.text("Laporan Transaksi UMKM", 14, 15);
+            
+            let dataArr = [];
+            if(tipe === 'beranda') {
+                let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
+                let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                dataArr = db.transaksi.filter(t => {
+                    if(t.status !== 'Lunas') return false; 
+                    if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
+                    if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
+                    return true;
+                }).slice().reverse();
+            } else { 
+                dataArr = db.transaksi.slice().reverse(); 
+            }
 
-        let body = dataArr.map(t => [ formatTanggalIndo(t.tanggal), t.pembeli, t.namaProduk + ' (x' + t.jumlah + ')', 'Rp ' + formatRupiah(t.total), 'Rp ' + formatRupiah(t.untung), t.status ]);
-        doc.autoTable({ startY: 20, head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [0, 123, 255] } });
-        doc.save(`Laporan_Transaksi_${Date.now()}.pdf`);
+            // PEMBERSIH EMOJI
+            let cleanText = (str) => (str||'').toString().replace(/[^\x00-\x7F]/g, "");
+
+            let body = dataArr.map(t => [ 
+                formatTanggalIndo(t.tanggal), 
+                cleanText(t.pembeli), 
+                cleanText(t.namaProduk) + ' (x' + t.jumlah + ')', 
+                'Rp ' + formatRupiah(t.total), 
+                'Rp ' + formatRupiah(t.untung), 
+                t.status 
+            ]);
+            
+            doc.autoTable({ 
+                startY: 20, 
+                head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], 
+                body: body, 
+                theme: 'grid', 
+                styles: { fontSize: 8 }, 
+                headStyles: { fillColor: [0, 123, 255] } 
+            });
+            
+            let blob = doc.output('blob');
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Transaksi_${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert("✅ PDF Berhasil Diunduh!");
+        } catch(err) {
+            alert("Gagal membuat PDF. Pesan Error: " + err.message);
+        }
     }
 
     // ================= TAB KASBON & CICILAN =================
@@ -1037,6 +1077,7 @@
         let jd = "Menu Lainnya"; 
         if(sub==='sub-pelanggan') jd="Data Pelanggan"; 
         if(sub==='sub-dompet') jd="Dompet Manual"; 
+        if(sub==='sub-riwayat') jd="Riwayat Full Transaksi"; 
         if(sub==='sub-backup') jd="Data Excel"; 
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
         if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } 
@@ -1055,6 +1096,7 @@
         document.getElementById('sub-wa').style.display = 'none';
         document.getElementById('sub-alokasi').style.display = 'none';
         document.getElementById('sub-pelanggan').style.display = 'none';
+        document.getElementById('sub-riwayat').style.display = 'none';
         document.getElementById('sub-backup').style.display = 'none';
         
         document.getElementById('main-menu-grid').style.display = 'grid'; 
@@ -1104,6 +1146,13 @@
             htmlTabelRiwayat += renderItemTransaksi(t, 'beranda');
         });
         document.getElementById('listTransaksiBerandaTabel').innerHTML = htmlTabelRiwayat || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+        
+        let htmlRiwayatFull = ""; let lastDateFull = "";
+        db.transaksi.slice().reverse().forEach(t => {
+            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
+            htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
+        });
+        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
         
         renderDaftarProduk(); renderDaftarPelanggan(); renderKasbonList();
         
