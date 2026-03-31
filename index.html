@@ -86,8 +86,6 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -215,8 +213,8 @@
                     <input type="checkbox" id="kasirSimpanProduk" checked style="width:auto; margin:0 8px 0 0;"><b style="color: #856404;">Simpan permanen ke Folder Umum</b>
                 </label>
                 <div class="grid-2">
-                    <div><label class="text-small">Harga Modal:</label><input type="text" inputmode="numeric" id="kasirHargaModal" placeholder="Rp 0" oninput="formatInputRupiah(event)"></div>
-                    <div><label class="text-small">Harga Jual:</label><input type="text" inputmode="numeric" id="kasirHargaJual" placeholder="Rp 0" oninput="formatInputRupiah(event)"></div>
+                    <div><label class="text-small">Harga Modal:</label><input type="text" inputmode="numeric" id="kasirHargaModal" placeholder="Rp 0" oninput="formatInputRupiah(event)" required></div>
+                    <div><label class="text-small">Harga Jual:</label><input type="text" inputmode="numeric" id="kasirHargaJual" placeholder="Rp 0" oninput="formatInputRupiah(event)" required></div>
                 </div>
                 <label class="text-small">Jumlah Barang (Qty):</label><input type="number" inputmode="numeric" id="kasirJumlah" placeholder="Jumlah" value="1" required>
                 <label class="text-small">Pelanggan:</label>
@@ -351,7 +349,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-portal')"><span>⚖️</span>Simulasi Kas</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-wa')"><span>📱</span>Struk WA</div>
-            <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
         </div>
 
@@ -467,29 +465,6 @@
             <div id="listPelanggan"></div>
         </div>
 
-        <div id="sub-riwayat" class="card" style="display:none;">
-            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <h4>Riwayat Full Transaksi</h4>
-            <div style="background: #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffdf7e;">
-                <div style="display: flex; align-items: center; font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom:1px dashed #ccc; padding-bottom:8px;">
-                    <input type="checkbox" id="checkSemuaTransaksiRiwayat" onchange="togglePilihSemuaTransaksiRiwayat()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua Baris
-                </div>
-                <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                    <button type="button" class="btn-wa" style="border-color:#28a745; color:#28a745;" onclick="kirimWABoronganRiwayat('pelanggan')">📱 WA Pembeli</button>
-                    <button type="button" class="btn-wa" style="border-color:#007bff; color:#007bff;" onclick="kirimWABoronganRiwayat('bos')">📱 WA Bos</button>
-                    <button type="button" class="btn-wa" style="border-color:#dc3545; color:#dc3545;" onclick="downloadPDFRiwayat('full')">📄 PDF</button>
-                    <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusTransaksiTerpilihRiwayat()">🗑 Hapus</button>
-                </div>
-            </div>
-            <p class="text-small" style="color:var(--primary); text-align:right; margin-bottom: 0;"><i>*Geser tabel ke kiri ⬅️</i></p>
-            <div class="table-responsive">
-                <table class="table-excel">
-                    <thead><tr><th class="text-center" style="width: 30px;">✔</th><th>Pelanggan & Status</th><th>Produk (Qty)</th><th class="text-right">Modal</th><th class="text-right text-blue">Jual</th><th class="text-right text-green">Untung</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="listRiwayatFullTabel"></tbody>
-                </table>
-            </div>
-        </div>
-
         <div id="sub-backup" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4 style="color:var(--primary); margin-bottom:5px;">📋 Salin Data (Ekspor)</h4>
@@ -593,7 +568,7 @@
     function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function getNamaHari(tglString) { return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][new Date(tglString).getDay()]; }
     
-    // SISTEM SALIN TEKS (ANTI ERROR DI HP)
+    // SISTEM SALIN TEKS PINTAR (ANTI BLOKIR HP)
     function salinTeks(teks, pesan = "Berhasil disalin!") {
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(teks).then(() => alert(pesan)).catch(e => copyFallback(teks, pesan));
@@ -984,9 +959,66 @@
     }
     function hitungBagiHasil() { let t = parseInt(document.getElementById('labaBersihAlokasi').dataset.laba||0), pTot=0; db.alokasi.forEach(a => { let p=parseInt(a.persen)||0; pTot+=p; let el=document.getElementById('hasilAlokasi-'+a.id); if(el) el.innerText = formatRupiah((p/100)*t); }); document.getElementById('peringatanPersen').style.display = (pTot>0&&pTot!==100)?'block':'none'; }
 
-    // ================= EXCEL PINTAR =================
-    function salinDataExcel(jenis) { let text = ""; if(jenis === 'transaksi') { text = "Tanggal\tHari\tPelanggan\tProduk\tModal\tJual\tUntung\n"; db.transaksi.forEach(t => { let pel = (t.pembeli||'Umum').toString().replace(/\t|\n/g,' '); let prod = (t.namaProduk||'').toString().replace(/\t|\n/g,' '); text += `${t.tanggal||''}\t${t.tanggal?getNamaHari(t.tanggal):''}\t${pel}\t${prod}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\n`; }); } else if (jenis === 'produk') { text = "Nama Produk\tKategori\tHarga Modal\tHarga Jual\n"; db.produk.forEach(p => { let n = (p.nama||'').toString().replace(/\t|\n/g,' '); text += `${n}\t${p.kategoriId||'umum'}\t${p.modal||0}\t${p.harga||0}\n`; }); } else if (jenis === 'pelanggan') { text = "Nama Pelanggan\tData Kontak Pintar\n"; db.pelanggan.forEach(p => { let n = (p.nama||'').toString().replace(/\t|\n/g,' '); let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(', '); text += `${n}\t${infoStr}\n`; }); } salinTeks(text, "Disalin! Silakan Paste (Tempel) di Excel."); }
-    function imporDataExcel(jenis) { let text = document.getElementById('pasteExcelText').value.trim(); if(!text) return alert("Silakan Paste data excel di kotak!"); let baris = text.split('\n'); let sukses = 0; baris.forEach(line => { let col = line.split('\t'); if(col.length < 2) return; if(jenis === 'transaksi') { let tgl = col[0], pel = col[2], prod = col[3], m = getAngkaMurni(col[4]), j = getAngkaMurni(col[5]), u = getAngkaMurni(col[6]); if(tgl !== 'Tanggal' && j > 0) { db.transaksi.push({ id: Date.now()+Math.random(), tanggal: tgl, namaProduk: prod||'Import', jumlah: 1, modal: m, total: j, untung: u||(j-m), status: 'Lunas', pembeli: pel||'Umum', dompetId: 'none' }); sukses++; } } else if(jenis === 'produk') { let nama = col[0], kat = col[1], m = getAngkaMurni(col[2]), j = getAngkaMurni(col[3]); if(nama !== 'Nama Produk' && nama.trim() !== '') { db.produk.push({ id: Date.now()+Math.random(), nama, kategoriId: kat||'umum', modal: m, harga: j, jenis: 'Digital' }); sukses++; } } else if(jenis === 'pelanggan') { let nama = col[0], infoStr = col[1] || ""; if(nama !== 'Nama Pelanggan' && nama.trim() !== '') { let infoArr = []; if(infoStr) { infoStr.split(',').forEach(pt => { let kv = pt.split(':'); if(kv.length >= 2) infoArr.push({ label: kv[0].trim(), value: kv[1].trim() }); else if(kv[0].trim()) infoArr.push({ label: 'Info', value: kv[0].trim() }); }); } db.pelanggan.push({ id: Date.now()+Math.random(), nama, info: infoArr }); sukses++; } } }); document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} diimpor!`); }
+    // ================= EXCEL PINTAR DENGAN FALLBACK =================
+    function salinDataExcel(jenis) { 
+        let text = ""; 
+        if(jenis === 'transaksi') { 
+            text = "Tanggal\tHari\tPelanggan\tProduk\tModal\tJual\tUntung\n"; 
+            db.transaksi.forEach(t => { 
+                let pel = (t.pembeli||'Umum').toString().replace(/\t|\n/g,' '); 
+                let prod = (t.namaProduk||'').toString().replace(/\t|\n/g,' '); 
+                text += `${t.tanggal||''}\t${t.tanggal?getNamaHari(t.tanggal):''}\t${pel}\t${prod}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\n`; 
+            }); 
+        } else if (jenis === 'produk') { 
+            text = "Nama Produk\tKategori\tHarga Modal\tHarga Jual\n"; 
+            db.produk.forEach(p => { 
+                let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
+                text += `${n}\t${p.kategoriId||'umum'}\t${p.modal||0}\t${p.harga||0}\n`; 
+            }); 
+        } else if (jenis === 'pelanggan') { 
+            text = "Nama Pelanggan\tData Kontak Pintar\n"; 
+            db.pelanggan.forEach(p => { 
+                let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
+                let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(', '); 
+                text += `${n}\t${infoStr}\n`; 
+            }); 
+        } 
+        salinTeks(text, "Disalin! Silakan Paste (Tempel) di Excel."); 
+    }
+    
+    function imporDataExcel(jenis) { 
+        let text = document.getElementById('pasteExcelText').value.trim(); 
+        if(!text) return alert("Silakan Paste data excel di kotak!"); 
+        let baris = text.split('\n'); let sukses = 0; 
+        baris.forEach(line => { 
+            let col = line.split('\t'); if(col.length < 2) return; 
+            if(jenis === 'transaksi') { 
+                let tgl = col[0], pel = col[2], prod = col[3], m = getAngkaMurni(col[4]), j = getAngkaMurni(col[5]), u = getAngkaMurni(col[6]); 
+                if(tgl !== 'Tanggal' && j > 0) { 
+                    db.transaksi.push({ id: Date.now()+Math.random(), tanggal: tgl, namaProduk: prod||'Import', jumlah: 1, modal: m, total: j, untung: u||(j-m), status: 'Lunas', pembeli: pel||'Umum', dompetId: 'none' }); sukses++; 
+                } 
+            } else if(jenis === 'produk') { 
+                let nama = col[0], kat = col[1], m = getAngkaMurni(col[2]), j = getAngkaMurni(col[3]); 
+                if(nama !== 'Nama Produk' && nama.trim() !== '') { 
+                    db.produk.push({ id: Date.now()+Math.random(), nama, kategoriId: kat||'umum', modal: m, harga: j, jenis: 'Digital' }); sukses++; 
+                } 
+            } else if(jenis === 'pelanggan') { 
+                let nama = col[0], infoStr = col[1] || ""; 
+                if(nama !== 'Nama Pelanggan' && nama.trim() !== '') { 
+                    let infoArr = []; 
+                    if(infoStr) { 
+                        infoStr.split(',').forEach(pt => { 
+                            let kv = pt.split(':'); 
+                            if(kv.length >= 2) infoArr.push({ label: kv[0].trim(), value: kv[1].trim() }); 
+                            else if(kv[0].trim()) infoArr.push({ label: 'Info', value: kv[0].trim() }); 
+                        }); 
+                    } 
+                    db.pelanggan.push({ id: Date.now()+Math.random(), nama, info: infoArr }); sukses++; 
+                } 
+            } 
+        }); 
+        document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} diimpor!`); 
+    }
 
     // ================= FUNGSI NAVIGASI & TAMPILAN GLOBAL =================
     function bukaHalaman(pg, nav, jd) { 
@@ -1005,7 +1037,6 @@
         let jd = "Menu Lainnya"; 
         if(sub==='sub-pelanggan') jd="Data Pelanggan"; 
         if(sub==='sub-dompet') jd="Dompet Manual"; 
-        if(sub==='sub-riwayat') jd="Riwayat Full Transaksi"; 
         if(sub==='sub-backup') jd="Data Excel"; 
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
         if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } 
@@ -1024,7 +1055,6 @@
         document.getElementById('sub-wa').style.display = 'none';
         document.getElementById('sub-alokasi').style.display = 'none';
         document.getElementById('sub-pelanggan').style.display = 'none';
-        document.getElementById('sub-riwayat').style.display = 'none';
         document.getElementById('sub-backup').style.display = 'none';
         
         document.getElementById('main-menu-grid').style.display = 'grid'; 
@@ -1075,13 +1105,6 @@
         });
         document.getElementById('listTransaksiBerandaTabel').innerHTML = htmlTabelRiwayat || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
         
-        let htmlRiwayatFull = ""; let lastDateFull = "";
-        db.transaksi.slice().reverse().forEach(t => {
-            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
-            htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
-        });
-        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
-        
         renderDaftarProduk(); renderDaftarPelanggan(); renderKasbonList();
         
         document.getElementById('listDompet').innerHTML = db.dompet.map(d => `<div class="list-item" style="border-left: 4px solid var(--primary); padding: 12px; background: #fdfdfd; margin-bottom:12px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div class="flex-between" style="align-items: center;"><div><b style="font-size: 15px;">${d.nama}</b><br><span class="text-small" style="color:#888;">${d.kategori || 'Kas Fisik'}</span><br><span class="text-green" style="font-size: 14px; font-weight: bold;">Rp ${formatRupiah(d.saldo)}</span></div><div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;"><button type="button" class="btn-outline" style="width:auto; padding:6px 12px; margin:0; font-size:11px; background: #eef2f5;" onclick="bukaDetailDompet('${d.id}')">📝 Hitung Pecahan ➡</button><div style="display:flex; gap:5px;"><button type="button" class="btn-warning" style="width:auto; padding:4px 8px; margin:0; font-size:10px; border:none;" onclick="ubahSaldoDompet('${d.id}')">Edit Saldo</button><button type="button" class="btn-red" style="width:auto; padding:4px 8px; margin:0; font-size:10px;" onclick="hapusDompetItem('${d.id}')">Hapus</button></div></div></div></div>`).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Belum ada dompet.</div>';
@@ -1090,4 +1113,4 @@
     }
 </script>
 </body>
-    </html>
+</html>
