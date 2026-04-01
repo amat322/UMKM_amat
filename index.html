@@ -178,6 +178,26 @@
             </form>
         </div>
     </div>
+    
+<div id="modal-edit-rincian" class="modal-popup">
+        <div class="popup-content">
+            <h4 style="margin-bottom: 10px;">✏️ Edit Rincian Barang</h4>
+            <form onsubmit="eksekusiSimpanRincian(event)">
+                <input type="hidden" id="editRincianUtangId">
+                <input type="hidden" id="editRincianIdx">
+                <label class="text-small" style="text-align:left; display:block;">Tanggal:</label>
+                <input type="date" id="editRincianTgl" required style="border-color: var(--primary);">
+                <label class="text-small" style="text-align:left; display:block;">Nama Produk/Barang:</label>
+                <input type="text" id="editRincianProduk" required>
+                <label class="text-small" style="text-align:left; display:block;">Harga (Rp):</label>
+                <input type="text" inputmode="numeric" id="editRincianNominal" oninput="formatInputRupiah(event)" required>
+                <div class="grid-2" style="margin-top: 15px;">
+                    <button type="submit" class="btn-green">Simpan</button>
+                    <button type="button" class="btn-red" onclick="tutupModalRincian()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="modal-struk" class="modal-popup">
         <div class="popup-content" style="background:#f4f4f4;">
@@ -731,14 +751,13 @@
             let ex = db.utang.find(u => u.nama === nmUtang && u.jenis === j && u.status !== 'Lunas');
             let r = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Pinjaman/Manual", nominal: n };
             
-            if(ex) { ex.nominal += n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); } 
+            if(ex) { ex.nominal = (Number(ex.nominal) || 0) + n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); } 
             else { db.utang.push({ id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r] }); }
             
             document.getElementById('nominalUtang').value=''; 
             document.getElementById('utangPelangganId').value=''; 
             document.getElementById('labelUtangPelanggan').innerHTML='<b>Umum / Pelanggan Baru</b>'; 
-            simpanData(); 
-            alert("Catatan " + j + " berhasil disimpan!");
+            simpanData(); alert("Catatan " + j + " berhasil disimpan!");
         } catch(e) { alert("Error Kasbon: " + e.message); }
     }
 
@@ -752,9 +771,8 @@
 
         document.getElementById('listUtang').innerHTML = filterUtang.map(u => {
             let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
-            let sU = (u.nominal || 0) - tD;
+            let sU = (Number(u.nominal) || 0) - tD;
             
-            // PERBAIKAN: Gunakan Index (idx) supaya data lama tetap bisa diedit
             let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map((c, idx) => `
                 <div class="cicilan-item flex-between" style="border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                     <span>${formatTanggalIndo(c.tanggal)}</span>
@@ -765,15 +783,92 @@
                     </div>
                 </div>`).join('') : '<div class="text-small" style="color:#aaa;">Belum ada cicilan.</div>';
                 
-            let hr = u.rincianBarang&&u.rincianBarang.length ? u.rincianBarang.map(r => `<div style="font-size:11px; padding:3px 0; border-bottom:1px dashed #ddd;">📅 <b>${formatTanggalIndo(r.tanggal)}</b>: ${r.produk} <span class="text-blue">(Rp ${formatRupiah(r.nominal)})</span></div>`).join('') : `<div class="text-small">${u.namaProduk}</div>`;
+            let hr = u.rincianBarang&&u.rincianBarang.length ? u.rincianBarang.map((r, idx) => `
+                <div style="font-size:11px; padding:5px 0; border-bottom:1px dashed #ddd; display:flex; justify-content:space-between; align-items:center;">
+                    <div>📅 <b>${formatTanggalIndo(r.tanggal)}</b>: ${r.produk} <span class="text-blue">(Rp ${formatRupiah(r.nominal)})</span></div>
+                    <div style="display:flex; gap:3px;">
+                        <button type="button" class="btn-outline" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="bukaEditRincian('${u.id}', ${idx})">✏️</button>
+                        <button type="button" class="btn-red" style="padding:2px 6px; font-size:10px; width:auto; margin:0;" onclick="hapusRincian('${u.id}', ${idx})">❌</button>
+                    </div>
+                </div>`).join('') : `<div class="text-small">${u.namaProduk}</div>`;
             
-            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:100px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
+            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:150px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
         }).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Kosong / Semua lunas! 🎉</div>';
     }
 
+    // [FUNGSI RINCIAN BARANG]
+    function bukaEditRincian(idUtang, idx) {
+        let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
+        let r = u.rincianBarang[idx]; if(!r) return;
+        document.getElementById('editRincianUtangId').value = idUtang;
+        document.getElementById('editRincianIdx').value = idx;
+        document.getElementById('editRincianTgl').value = r.tanggal;
+        document.getElementById('editRincianProduk').value = r.produk;
+        document.getElementById('editRincianNominal').value = formatRupiah(r.nominal);
+        document.getElementById('modal-edit-rincian').classList.add('active');
+    }
+    function tutupModalRincian() { document.getElementById('modal-edit-rincian').classList.remove('active'); }
+    
+    function eksekusiSimpanRincian(e) {
+        e.preventDefault();
+        let idUtang = document.getElementById('editRincianUtangId').value;
+        let idx = parseInt(document.getElementById('editRincianIdx').value);
+        let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
+        
+        let nomLama = Number(u.rincianBarang[idx].nominal) || 0;
+        let nomBaru = getAngkaMurni(document.getElementById('editRincianNominal').value);
+        
+        u.rincianBarang[idx].tanggal = document.getElementById('editRincianTgl').value;
+        u.rincianBarang[idx].hari = getNamaHari(document.getElementById('editRincianTgl').value);
+        u.rincianBarang[idx].produk = document.getElementById('editRincianProduk').value;
+        u.rincianBarang[idx].nominal = nomBaru;
+        
+        // Sesuaikan Total Utang
+        u.nominal = (Number(u.nominal) || 0) - nomLama + nomBaru;
+        
+        let transId = u.rincianBarang[idx].transId;
+        if(transId) { let t = db.transaksi.find(x => String(x.id) === String(transId)); if(t) { t.total = nomBaru; t.tanggal = u.rincianBarang[idx].tanggal; t.namaProduk = u.rincianBarang[idx].produk; } }
+        simpanData(); tutupModalRincian();
+    }
+
+    function hapusRincian(idUtang, idx) {
+        if(!confirm("Yakin hapus rincian ini? Total utang akan berkurang otomatis.")) return;
+        let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
+        let nomHapus = Number(u.rincianBarang[idx].nominal) || 0;
+        let transId = u.rincianBarang[idx].transId;
+        
+        u.rincianBarang.splice(idx, 1);
+        u.nominal = (Number(u.nominal) || 0) - nomHapus;
+        
+        if(transId) { db.transaksi = db.transaksi.filter(t => String(t.id) !== String(transId)); }
+        if(u.rincianBarang.length === 0 && u.nominal <= 0) { db.utang = db.utang.filter(x => String(x.id) !== String(idUtang)); }
+        simpanData();
+    }
+
+    // [FUNGSI LUNAS & HAPUS UTANG UTAMA]
+    function lunasSekaligus(id) { 
+        if(confirm("Lunas & Masuk Riwayat?")) { 
+            let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return; 
+            let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+            let s = (Number(u.nominal) || 0) - tD; 
+            if(s > 0) { 
+                if(!u.cicilan) u.cicilan=[]; 
+                u.cicilan.push({id:Date.now(), tanggal:ambilTanggal(), hari:getNamaHari(ambilTanggal()), nominal:s}); 
+            } 
+            selesaikanUtang(u); simpanData(); alert("Beres!"); 
+        } 
+    }
+    function hapusUtang(id) { 
+        if(confirm("Hapus seluruh catatan kasbon ini?")) { 
+            db.utang = db.utang.filter(u => String(u.id) !== String(id)); simpanData(); 
+        } 
+    }
+
+    // [FUNGSI CICILAN]
     function bukaModalCicilan(id) {
         let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
-        let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0);
+        let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+        let s = (Number(u.nominal) || 0) - tD;
         document.getElementById('cicilanUtangId').value = id;
         document.getElementById('editCicilanId').value = ""; // Mode Tambah
         document.getElementById('cicilanSisaTampil').innerText = "Catat Baru (Sisa Rp " + formatRupiah(s) + ")";
@@ -785,7 +880,8 @@
     function bukaEditCicilan(idUtang, idx) {
         let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
         let c = u.cicilan[idx]; if(!c) return;
-        let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,x)=>a+x.nominal,0):0) + c.nominal; 
+        let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,x) => a + (Number(x.nominal) || 0), 0);
+        let s = (Number(u.nominal) || 0) - tD + Number(c.nominal); 
         
         document.getElementById('cicilanUtangId').value = idUtang;
         document.getElementById('editCicilanId').value = idx; // Mode Edit pakai Index
@@ -818,17 +914,16 @@
             if(!u.cicilan) u.cicilan=[]; 
             
             if(idEdit !== "") {
-                // EDIT
                 let idx = parseInt(idEdit);
                 u.cicilan[idx].nominal = nom; 
                 u.cicilan[idx].tanggal = tgl; 
                 u.cicilan[idx].hari = getNamaHari(tgl);
             } else {
-                // TAMBAH BARU
                 u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom }); 
             }
             
-            if(u.cicilan.reduce((a,c)=>a+c.nominal,0) >= u.nominal) { 
+            let tD = u.cicilan.reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+            if(tD >= (Number(u.nominal) || 0)) { 
                 selesaikanUtang(u); alert("Lunas & Masuk Riwayat!"); 
             } else { 
                 alert(idEdit !== "" ? "Cicilan berhasil diubah!" : "Cicilan berhasil dicatat!"); 
@@ -1308,4 +1403,4 @@
     }
 </script>
 </body>
-                                                                                                                    </html>
+</html>
