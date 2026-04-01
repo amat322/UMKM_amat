@@ -717,7 +717,7 @@
         } catch(err) { alert("Error Kasir: " + err.message); }
     }
 
-    // ================= FUNGSI UTANG/PIUTANG & CICILAN =================
+ // ================= FUNGSI UTANG/PIUTANG & CICILAN =================
     function eksekusiTambahUtang(e) {
         e.preventDefault();
         try {
@@ -743,6 +743,7 @@
     }
 
     function switchKasbonTab(tab) { kasbonTabAktif = tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('tab-btn-' + tab.toLowerCase()).classList.add('active'); renderKasbonList(); }
+    
     function renderKasbonList() {
         let kw = (document.getElementById('cariKasbonInput') || {}).value || ""; kw = kw.toLowerCase();
         let filterUtang = db.utang.filter(u => u.status !== 'Lunas' && u.jenis === kasbonTabAktif && u.nama.toLowerCase().includes(kw));
@@ -750,17 +751,19 @@
         document.getElementById('listUtang').innerHTML = filterUtang.map(u => {
             let tD = u.cicilan?u.cicilan.reduce((a, c)=>a+c.nominal,0):0; let sU = u.nominal-tD;
             
-            let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map(c => `
+            // PERBAIKAN: Gunakan Index (idx) alih-alih c.id supaya data lama tetap bisa diedit
+            let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map((c, idx) => `
                 <div class="cicilan-item flex-between" style="border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                     <span>${formatTanggalIndo(c.tanggal)}</span>
                     <div style="display:flex; align-items:center;">
                         <span class="text-green">+ Rp ${formatRupiah(c.nominal)}</span>
-                        <button type="button" class="btn-outline" style="padding:2px 6px; font-size:10px; width:auto; margin:0 0 0 5px;" onclick="bukaEditCicilan('${u.id}', '${c.id}')">✏️</button>
-                        <button type="button" class="btn-red" style="padding:2px 6px; font-size:10px; width:auto; margin:0 0 0 2px;" onclick="hapusCicilan('${u.id}', '${c.id}')">❌</button>
+                        <button type="button" class="btn-outline" style="padding:2px 6px; font-size:10px; width:auto; margin:0 0 0 5px;" onclick="bukaEditCicilan('${u.id}', ${idx})">✏️</button>
+                        <button type="button" class="btn-red" style="padding:2px 6px; font-size:10px; width:auto; margin:0 0 0 2px;" onclick="hapusCicilan('${u.id}', ${idx})">❌</button>
                     </div>
                 </div>`).join('') : '<div class="text-small" style="color:#aaa;">Belum ada cicilan.</div>';
                 
             let hr = u.rincianBarang&&u.rincianBarang.length ? u.rincianBarang.map(r => `<div style="font-size:11px; padding:3px 0; border-bottom:1px dashed #ddd;">📅 <b>${formatTanggalIndo(r.tanggal)}</b>: ${r.produk} <span class="text-blue">(Rp ${formatRupiah(r.nominal)})</span></div>`).join('') : `<div class="text-small">${u.namaProduk}</div>`;
+            
             return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:100px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
         }).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Kosong / Semua lunas! 🎉</div>';
     }
@@ -776,23 +779,23 @@
         document.getElementById('modal-cicilan').classList.add('active');
     }
 
-    function bukaEditCicilan(idUtang, idCicilan) {
+    function bukaEditCicilan(idUtang, idx) {
         let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
-        let c = u.cicilan.find(x => String(x.id) === String(idCicilan)); if(!c) return;
+        let c = u.cicilan[idx]; if(!c) return;
         let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,x)=>a+x.nominal,0):0) + c.nominal; 
         
         document.getElementById('cicilanUtangId').value = idUtang;
-        document.getElementById('editCicilanId').value = idCicilan; // Mode Edit
+        document.getElementById('editCicilanId').value = idx; // Mode Edit pakai Index
         document.getElementById('cicilanSisaTampil').innerText = "Edit (Max Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = c.tanggal; 
         document.getElementById('cicilanNominal').value = formatRupiah(c.nominal);
         document.getElementById('modal-cicilan').classList.add('active');
     }
 
-    function hapusCicilan(idUtang, idCicilan) {
+    function hapusCicilan(idUtang, idx) {
         if(!confirm("Yakin ingin menghapus riwayat cicilan ini?")) return;
         let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
-        u.cicilan = u.cicilan.filter(x => String(x.id) !== String(idCicilan));
+        u.cicilan.splice(idx, 1); // Hapus berdasarkan urutan
         simpanData();
     }
 
@@ -813,8 +816,10 @@
             
             if(idEdit !== "") {
                 // EDIT
-                let c = u.cicilan.find(x => String(x.id) === String(idEdit));
-                if(c) { c.nominal = nom; c.tanggal = tgl; c.hari = getNamaHari(tgl); }
+                let idx = parseInt(idEdit);
+                u.cicilan[idx].nominal = nom; 
+                u.cicilan[idx].tanggal = tgl; 
+                u.cicilan[idx].hari = getNamaHari(tgl);
             } else {
                 // TAMBAH BARU
                 u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom }); 
@@ -897,27 +902,73 @@
         let area = document.getElementById('area-struk');
         html2canvas(area).then(canvas => { let link = document.createElement('a'); link.download = `Struk-${Date.now()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
     }
-    function downloadPDFRiwayat(tipe) {
+   function downloadPDFRiwayat(tipe) {
         try {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setFontSize(14); doc.text("Laporan Transaksi UMKM", 14, 15);
+            const { jsPDF } = window.jspdf; 
+            const doc = new jsPDF();
+            doc.setFontSize(14); 
+            doc.text("Laporan Transaksi UMKM", 14, 15);
+            
             let dataArr = [];
             if(tipe === 'beranda') {
                 let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
                 let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                
                 dataArr = db.transaksi.filter(t => {
                     if(t.status !== 'Lunas') return false; 
-                    if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
+                    if(filterSaatIni==='harian') return t.tanggal===tglH; 
+                    if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; 
+                    if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); 
+                    if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
                     if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
                     return true;
-                }).slice().reverse();
-            } else { dataArr = db.transaksi.slice().reverse(); }
+                }); // <-- HAPUS .reverse() DI SINI
+            } else { 
+                dataArr = db.transaksi.slice(); // <-- HAPUS .reverse() DI SINI JUGA
+            }
+
+            // MESIN PENGURUT TANGGAL (Dari Tanggal Muda ke Tanggal Tua)
+            dataArr.sort((a, b) => {
+                if (a.tanggal < b.tanggal) return -1;
+                if (a.tanggal > b.tanggal) return 1;
+                return a.id - b.id; // Kalau tanggalnya sama, urutkan berdasarkan jam input
+            });
+
+            // PEMBERSIH EMOJI
             let cleanText = (str) => (str||'').toString().replace(/[^\x00-\x7F]/g, "");
-            let body = dataArr.map(t => [ formatTanggalIndo(t.tanggal), cleanText(t.pembeli), cleanText(t.namaProduk) + ' (x' + t.jumlah + ')', 'Rp ' + formatRupiah(t.total), 'Rp ' + formatRupiah(t.untung), t.status ]);
-            doc.autoTable({ startY: 20, head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [0, 123, 255] } });
-            let blob = doc.output('blob'); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = `Laporan_Transaksi_${Date.now()}.pdf`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            alert("✅ PDF Berhasil Diunduh!");
-        } catch(err) { alert("Gagal membuat PDF. Pesan Error: " + err.message); }
+
+            let body = dataArr.map(t => [ 
+                formatTanggalIndo(t.tanggal), 
+                cleanText(t.pembeli), 
+                cleanText(t.namaProduk) + ' (x' + t.jumlah + ')', 
+                'Rp ' + formatRupiah(t.total), 
+                'Rp ' + formatRupiah(t.untung), 
+                t.status 
+            ]);
+            
+            doc.autoTable({ 
+                startY: 20, 
+                head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], 
+                body: body, 
+                theme: 'grid', 
+                styles: { fontSize: 8 }, 
+                headStyles: { fillColor: [0, 123, 255] } 
+            });
+            
+            let blob = doc.output('blob');
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Transaksi_${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert("✅ PDF Berhasil Diunduh Sesuai Urutan Tanggal!");
+        } catch(err) {
+            alert("Gagal membuat PDF. Pesan Error: " + err.message);
+        }
     }
 
     // ================= DOMPET & OPNAME =================
