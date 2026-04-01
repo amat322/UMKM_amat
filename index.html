@@ -86,6 +86,8 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -101,10 +103,6 @@
         /* Desain Struk */
         .struk-kertas { background: #fff; color: #000; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; text-align: left; width: 100%; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
-        
-        /* Animasi Banner Sawer */
-        .banner-sawer { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; margin-top: 5px; }
-        .banner-sawer:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -122,15 +120,6 @@
             <button type="button" class="btn-green" style="background: #128C7E;" onclick="eksekusiKirimWA('bisnis')">💼 WhatsApp Business</button>
             <button type="button" class="btn-outline" style="border-color: #007bff; color: #007bff; margin-bottom: 15px;" onclick="eksekusiKirimWA('umum')">🌐 WA Web / Pilihan Sistem</button>
             <button type="button" class="btn-red" style="margin-bottom: 0; width: auto; padding: 8px 30px;" onclick="tutupModalWA()">❌ Batal</button>
-        </div>
-    </div>
-
-    <div id="modal-qris" class="modal-popup">
-        <div class="popup-content" style="background:#fff; padding: 20px;">
-            <h4 style="margin-bottom: 5px; color:#d81b60;">☕ Sawer Mie Ayam</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Sawer buat beli mie ayam hehehe 🍜</p>
-            <img src="https://i.supaimg.com/ad460eb2-b309-4aa9-b61c-59eea64d0f56/84282f7b-0886-40a8-b4cc-752e51042834.png" style="width: 100%; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee;">
-            <button type="button" class="btn-red" onclick="tutupModalQRIS()">Tutup</button>
         </div>
     </div>
 
@@ -174,7 +163,7 @@
     <div id="modal-cicilan" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">💳 Catat Cicilan</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Info: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
+            <p class="text-small" style="margin-bottom: 15px;">Sisa Tagihan: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
             <form onsubmit="eksekusiSimpanCicilan(event)">
                 <input type="hidden" id="cicilanUtangId">
                 <input type="hidden" id="editCicilanId"> 
@@ -366,10 +355,11 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
         </div>
-        
-        <div id="banner-sawer" class="banner-sawer" onclick="bukaModalQRIS()">
+
+        <div id="banner-sawer" class="card" style="text-align: center; margin-top: 5px;">
             <h4 style="color: #d81b60; margin-bottom: 5px;">☕ Sawer Developer</h4>
-            <p style="font-size: 12px; color: #a80746;">Sawer buat beli mie ayam hehehe 🍜</p>
+            <p style="font-size: 12px; color: #a80746; margin-bottom: 10px;">Sawer buat beli mie ayam hehehe 🍜</p>
+            <img src="https://i.supaimg.com/ad460eb2-b309-4aa9-b61c-59eea64d0f56/84282f7b-0886-40a8-b4cc-752e51042834.png" alt="QRIS Sawer" style="width: 100%; max-width: 250px; border-radius: 10px; border: 1px dashed #ccc; padding: 5px;">
         </div>
 
         <div id="sub-tema" class="card" style="display:none;">
@@ -436,13 +426,13 @@
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Pengaturan Struk WA</h4>
             
-            <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
+            <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px; margin-top:10px;">
                 <b style="color: #0056b3; font-size: 12px;">💡 Panduan Kode Otomatis:</b><br>
                 <span style="font-size: 11px; color: #333;">
                     <b>[Nama]</b> = Nama | <b>[Tgl]</b> = Tanggal Transaksi<br>
-                    <b>[Produk]</b> = Daftar Belanja | <b>[Total]</b> = Total Harga<br>
+                    <b>[Produk]</b> = Daftar Belanja | <b>[Total]</b> = Harga Total<br>
                     <b>[Modal]</b> & <b>[Untung]</b> = Untuk Laporan Bos<br>
-                    <b>[Sisa]</b>, <b>[TotalDibayar]</b>, <b>[RiwayatCicilan]</b> = Tagihan Kasbon
+                    <b>[Sisa]</b>, <b>[TotalDibayar]</b>, <b>[RiwayatCicilan]</b> = Tagihan
                 </span>
             </div>
 
@@ -664,14 +654,10 @@
     function kembaliKeMenu() { 
         document.querySelectorAll('#page-menu > div').forEach(div => div.style.display = 'none');
         document.getElementById('main-menu-grid').style.display = 'grid'; 
-        document.getElementById('banner-sawer').style.display = 'block'; // Tampilkan lagi banner sawernya
+        document.getElementById('banner-sawer').style.display = 'block'; // Banner langsung muncul
         document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
         idDompetAktif = null;
     }
-
-    // ================= FUNGSI SAWER QRIS =================
-    function bukaModalQRIS() { document.getElementById('modal-qris').classList.add('active'); }
-    function tutupModalQRIS() { document.getElementById('modal-qris').classList.remove('active'); }
 
     // ================= FUNGSI KASIR =================
     function eksekusiKasir(e) {
@@ -760,7 +746,7 @@
         let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
         let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0);
         document.getElementById('cicilanUtangId').value = id;
-        document.getElementById('editCicilanId').value = ""; 
+        document.getElementById('editCicilanId').value = ""; // Mode Tambah
         document.getElementById('cicilanSisaTampil').innerText = "Catat Baru (Sisa Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = ambilTanggal(); 
         document.getElementById('cicilanNominal').value = "";
@@ -773,7 +759,7 @@
         let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,x)=>a+x.nominal,0):0) + c.nominal; 
         
         document.getElementById('cicilanUtangId').value = idUtang;
-        document.getElementById('editCicilanId').value = idCicilan; 
+        document.getElementById('editCicilanId').value = idCicilan; // Mode Edit
         document.getElementById('cicilanSisaTampil').innerText = "Edit (Max Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = c.tanggal; 
         document.getElementById('cicilanNominal').value = formatRupiah(c.nominal);
@@ -803,9 +789,11 @@
             if(!u.cicilan) u.cicilan=[]; 
             
             if(idEdit !== "") {
+                // EDIT
                 let c = u.cicilan.find(x => String(x.id) === String(idEdit));
                 if(c) { c.nominal = nom; c.tanggal = tgl; c.hari = getNamaHari(tgl); }
             } else {
+                // TAMBAH BARU
                 u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom }); 
             }
             
@@ -910,7 +898,8 @@
     }
 
     // ================= DOMPET & OPNAME =================
-    function eksekusiTambahDompet() { 
+    function eksekusiTambahDompet(e) { 
+        e.preventDefault();
         try {
             let nama = document.getElementById('namaDompetBaru').value.trim(); let kat = document.getElementById('kategoriDompetBaru').value; let saldo = getAngkaMurni(document.getElementById('saldoAwalDompet').value);
             if(!nama) return alert("Isi nama dompet!");
@@ -1162,4 +1151,4 @@
     }
 </script>
 </body>
-                    </html>
+</html>
