@@ -86,8 +86,6 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -163,7 +161,7 @@
     <div id="modal-cicilan" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">💳 Catat Cicilan</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Sisa Tagihan: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
+            <p class="text-small" style="margin-bottom: 15px;">Info: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
             <form onsubmit="eksekusiSimpanCicilan(event)">
                 <input type="hidden" id="cicilanUtangId">
                 <input type="hidden" id="editCicilanId"> 
@@ -582,13 +580,12 @@
 
         db.utang.forEach(u => { if(!u.rincianBarang) { u.rincianBarang = [{ transId: u.transId || null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: u.namaProduk || "Pinjaman/Tagihan", nominal: u.nominal }]; }});
         
-        simpanData();
+        try { renderKategoriSelect(); } catch(e) {}
+        try { ubahTema(db.tema, false); } catch(e) {}
         document.getElementById('kasirTanggal').value = ambilTanggal();
         document.getElementById('inputWarnaTema').value = db.tema;
-        ubahTema(db.tema, false);
-        batalEditPelanggan();
-        renderKategoriSelect(); 
-        updateSemuaTampilan();
+        
+        simpanData();
     };
 
     function simpanData() { 
