@@ -86,6 +86,8 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -883,7 +885,7 @@
         let wrn = document.getElementById('inputWarnaTema').value; ubahTema(wrn, true); alert("Tema warna berhasil disimpan!"); kembaliKeMenu();
     }
 
-    // ================= STRUK THERMAL & CETAK PDF ANTI-RUSAK =================
+    // ================= STRUK THERMAL & CETAK PDF =================
     function bukaStruk(id) {
         let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return;
         document.getElementById('struk-info').innerHTML = `Tgl: ${formatTanggalIndo(t.tanggal)}<br>Plg: ${t.pembeli}`;
@@ -895,14 +897,10 @@
         let area = document.getElementById('area-struk');
         html2canvas(area).then(canvas => { let link = document.createElement('a'); link.download = `Struk-${Date.now()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
     }
-    
     function downloadPDFRiwayat(tipe) {
         try {
-            const { jsPDF } = window.jspdf; 
-            const doc = new jsPDF();
-            doc.setFontSize(14); 
-            doc.text("Laporan Transaksi UMKM", 14, 15);
-            
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFontSize(14); doc.text("Laporan Transaksi UMKM", 14, 15);
             let dataArr = [];
             if(tipe === 'beranda') {
                 let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
@@ -913,45 +911,13 @@
                     if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
                     return true;
                 }).slice().reverse();
-            } else { 
-                dataArr = db.transaksi.slice().reverse(); 
-            }
-
-            // PEMBERSIH EMOJI
+            } else { dataArr = db.transaksi.slice().reverse(); }
             let cleanText = (str) => (str||'').toString().replace(/[^\x00-\x7F]/g, "");
-
-            let body = dataArr.map(t => [ 
-                formatTanggalIndo(t.tanggal), 
-                cleanText(t.pembeli), 
-                cleanText(t.namaProduk) + ' (x' + t.jumlah + ')', 
-                'Rp ' + formatRupiah(t.total), 
-                'Rp ' + formatRupiah(t.untung), 
-                t.status 
-            ]);
-            
-            doc.autoTable({ 
-                startY: 20, 
-                head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], 
-                body: body, 
-                theme: 'grid', 
-                styles: { fontSize: 8 }, 
-                headStyles: { fillColor: [0, 123, 255] } 
-            });
-            
-            let blob = doc.output('blob');
-            let url = URL.createObjectURL(blob);
-            let a = document.createElement('a');
-            a.href = url;
-            a.download = `Laporan_Transaksi_${Date.now()}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
+            let body = dataArr.map(t => [ formatTanggalIndo(t.tanggal), cleanText(t.pembeli), cleanText(t.namaProduk) + ' (x' + t.jumlah + ')', 'Rp ' + formatRupiah(t.total), 'Rp ' + formatRupiah(t.untung), t.status ]);
+            doc.autoTable({ startY: 20, head: [['Tanggal', 'Pelanggan', 'Produk', 'Total Jual', 'Untung', 'Status']], body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [0, 123, 255] } });
+            let blob = doc.output('blob'); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = `Laporan_Transaksi_${Date.now()}.pdf`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             alert("✅ PDF Berhasil Diunduh!");
-        } catch(err) {
-            alert("Gagal membuat PDF. Pesan Error: " + err.message);
-        }
+        } catch(err) { alert("Gagal membuat PDF. Pesan Error: " + err.message); }
     }
 
     // ================= DOMPET & OPNAME =================
@@ -1188,6 +1154,58 @@
         }); 
         document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} diimpor!`); 
     }
+    
+    // ================= ALOKASI BAGI HASIL (ANTI-NAN) =================
+    function renderAlokasiList() { 
+        document.getElementById('listAlokasiDinamis').innerHTML = db.alokasi.map(a => `
+        <div style="background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-bottom:10px;">
+            <div class="flex-between" style="margin-bottom:8px;">
+                <b class="text-blue">${a.nama}</b>
+                <button type="button" class="btn-red" style="width:auto; padding:6px 12px; margin:0; font-size:12px; border-radius:6px;" onclick="hapusItemAlokasi('${a.id}')">🗑️ Hapus</button>
+            </div>
+            <div class="flex-between" style="align-items:center;">
+                <div style="display:flex; align-items:center;">
+                    <input type="number" inputmode="numeric" value="${a.persen||0}" style="width:70px; margin:0 5px 0 0; padding:8px; text-align:center;" oninput="ubahPersenAlokasi('${a.id}', this.value)"> 
+                    <span class="text-small">%</span>
+                </div>
+                <div class="text-green" style="font-weight:bold; font-size:16px;">Rp <span id="hasilAlokasi-${a.id}">0</span></div>
+            </div>
+        </div>`).join('') || '<div class="text-small text-center">Kosong</div>'; 
+        hitungBagiHasil(); 
+    }
+    function tambahItemAlokasi() { let n = prompt("Nama pos:"); if(n&&n.trim()!=="") { db.alokasi.push({ id: Date.now(), nama: n.trim(), persen: 0 }); simpanData(); } }
+    function hapusItemAlokasi(id) { if(confirm("Hapus pos ini?")) { db.alokasi = db.alokasi.filter(a => String(a.id) !== String(id)); simpanData(); } }
+    function ubahPersenAlokasi(id, val) { 
+        let a = db.alokasi.find(x => String(x.id) === String(id)); 
+        if(a) { 
+            let parsed = parseInt(val);
+            a.persen = isNaN(parsed) ? 0 : parsed; 
+            localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
+            hitungBagiHasil(); 
+        } 
+    }
+    function toggleFilterAlokasi() { document.getElementById('wadahFilterCustomAlokasi').style.display = (document.getElementById('periodeAlokasi').value === 'custom') ? 'block' : 'none'; updateLabaAlokasi(); }
+    function updateLabaAlokasi() {
+        let p = document.getElementById('periodeAlokasi').value, kU = document.getElementById('cbKurangiUtang').checked, kP = document.getElementById('cbKurangiPiutang').checked, hU = document.getElementById('cbHanyaUntung').checked, tH = ambilTanggal(), bI = tH.substring(0, 7);
+        let dt = new Date(); dt.setDate(dt.getDate()-7); let tM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        let dh = db.transaksi.reduce((s, t) => { let ok=false; if(p==='semua') ok=true; else if(p==='bulanIni') ok=t.tanggal.startsWith(bI); else if(p==='hariIni') ok=t.tanggal===tH; else if(p==='mingguan') ok=(t.tanggal>=tM&&t.tanggal<=tH); else if(p==='custom') { let m=document.getElementById('tglMulaiAlokasi').value, a=document.getElementById('tglAkhirAlokasi').value; if(m&&a) ok=(t.tanggal>=m&&t.tanggal<=a); } return ok?s+(hU?t.untung:t.total):s; }, 0);
+        if(kP) dh -= db.utang.filter(u=>u.jenis==='Piutang'&&u.status!=='Lunas').reduce((s,u)=>s+(u.nominal-(u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0)),0);
+        if(kU) dh -= db.utang.filter(u=>u.jenis==='Utang'&&u.status!=='Lunas').reduce((s,u)=>s+(u.nominal-(u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0)),0);
+        dh = dh<0?0:dh; document.getElementById('labelDasarHitung').innerText = hU?"Total Laba Tunai:":"Total Omset Tunai:"; document.getElementById('labaBersihAlokasi').innerText = formatRupiah(dh); document.getElementById('labaBersihAlokasi').dataset.laba = dh; hitungBagiHasil();
+    }
+    function hitungBagiHasil() { 
+        let t = parseInt(document.getElementById('labaBersihAlokasi').dataset.laba||0);
+        if(isNaN(t)) t = 0;
+        let pTot=0; 
+        db.alokasi.forEach(a => { 
+            let p=parseInt(a.persen);
+            if(isNaN(p)) p = 0;
+            pTot+=p; 
+            let el=document.getElementById('hasilAlokasi-'+a.id); 
+            if(el) el.innerText = formatRupiah((p/100)*t); 
+        }); 
+        document.getElementById('peringatanPersen').style.display = (pTot>0&&pTot!==100)?'block':'none'; 
+    }
 
     function updateSemuaTampilan() {
         let sal = db.dompet.reduce((s, d) => s + parseInt(d.saldo||0), 0); 
@@ -1218,6 +1236,14 @@
 
         // RENDER SEMUA DATA DENGAN AMAN
         try { renderDaftarTransaksiBeranda(); } catch(e) {}
+        
+        let htmlRiwayatFull = ""; let lastDateFull = "";
+        db.transaksi.slice().reverse().forEach(t => {
+            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
+            htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
+        });
+        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+        
         try { renderDaftarProduk(); } catch(e) {}
         try { renderDaftarPelanggan(); } catch(e) {}
         try { renderKasbonList(); } catch(e) {}
