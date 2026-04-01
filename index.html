@@ -86,6 +86,8 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -161,7 +163,7 @@
     <div id="modal-cicilan" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">💳 Catat Cicilan</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Info: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
+            <p class="text-small" style="margin-bottom: 15px;">Sisa Tagihan: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
             <form onsubmit="eksekusiSimpanCicilan(event)">
                 <input type="hidden" id="cicilanUtangId">
                 <input type="hidden" id="editCicilanId"> 
@@ -350,6 +352,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-portal')"><span>⚖️</span>Simulasi Kas</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-wa')"><span>📱</span>Struk WA</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
         </div>
@@ -483,6 +486,29 @@
             <div id="listPelanggan"></div>
         </div>
 
+        <div id="sub-riwayat" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>Riwayat Full Transaksi</h4>
+            <div style="background: #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffdf7e;">
+                <div style="display: flex; align-items: center; font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom:1px dashed #ccc; padding-bottom:8px;">
+                    <input type="checkbox" id="checkSemuaTransaksiRiwayat" onchange="togglePilihSemuaTransaksiRiwayat()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua Baris
+                </div>
+                <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                    <button type="button" class="btn-wa" style="border-color:#28a745; color:#28a745;" onclick="kirimWABoronganRiwayat('pelanggan')">📱 WA Pembeli</button>
+                    <button type="button" class="btn-wa" style="border-color:#007bff; color:#007bff;" onclick="kirimWABoronganRiwayat('bos')">📱 WA Bos</button>
+                    <button type="button" class="btn-wa" style="border-color:#dc3545; color:#dc3545;" onclick="downloadPDFRiwayat('full')">📄 PDF</button>
+                    <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusTransaksiTerpilihRiwayat()">🗑 Hapus</button>
+                </div>
+            </div>
+            <p class="text-small" style="color:var(--primary); text-align:right; margin-bottom: 0;"><i>*Geser tabel ke kiri ⬅️</i></p>
+            <div class="table-responsive">
+                <table class="table-excel">
+                    <thead><tr><th class="text-center" style="width: 30px;">✔</th><th>Pelanggan & Status</th><th>Produk (Qty)</th><th class="text-right">Modal</th><th class="text-right text-blue">Jual</th><th class="text-right text-green">Untung</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody id="listRiwayatFullTabel"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="sub-backup" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4 style="color:var(--primary); margin-bottom:5px;">📋 Salin Data (Ekspor)</h4>
@@ -610,7 +636,20 @@
     
     // SAPU BERSIH SUB-MENU SAAT PINDAH
     function bukaSubHalaman(sub) { 
-        document.querySelectorAll('#page-menu > div').forEach(div => div.style.display = 'none');
+        document.getElementById('main-menu-grid').style.display = 'none';
+        document.getElementById('banner-sawer').style.display = 'none'; 
+        
+        document.getElementById('sub-kategori').style.display = 'none';
+        document.getElementById('sub-pelanggan').style.display = 'none';
+        document.getElementById('sub-alokasi').style.display = 'none';
+        document.getElementById('sub-dompet').style.display = 'none';
+        document.getElementById('sub-portal').style.display = 'none';
+        document.getElementById('sub-wa').style.display = 'none';
+        document.getElementById('sub-backup').style.display = 'none';
+        document.getElementById('sub-tema').style.display = 'none';
+        document.getElementById('sub-dompet-detail').style.display = 'none';
+        document.getElementById('sub-riwayat').style.display = 'none';
+
         document.getElementById(sub).style.display = 'block'; 
         
         let jd = "Menu Lainnya"; 
@@ -618,6 +657,7 @@
         if(sub==='sub-dompet') jd="Dompet Manual"; 
         if(sub==='sub-backup') jd="Data Excel"; 
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
+        if(sub==='sub-riwayat') jd="Riwayat Full"; 
         if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } 
         if(sub==='sub-wa') { jd="Struk WA"; document.getElementById('tplPelanggan').value=db.templateWA.pelanggan; document.getElementById('tplTagihan').value=db.templateWA.tagihan; document.getElementById('tplBos').value=db.templateWA.bos; } 
         if(sub==='sub-kategori') { jd="Kategori Produk"; renderKategoriMasterList(); }
@@ -626,9 +666,19 @@
     }
     
     function kembaliKeMenu() { 
-        document.querySelectorAll('#page-menu > div').forEach(div => div.style.display = 'none');
+        document.getElementById('sub-tema').style.display = 'none';
+        document.getElementById('sub-kategori').style.display = 'none';
+        document.getElementById('sub-portal').style.display = 'none';
+        document.getElementById('sub-dompet').style.display = 'none';
+        document.getElementById('sub-dompet-detail').style.display = 'none';
+        document.getElementById('sub-wa').style.display = 'none';
+        document.getElementById('sub-alokasi').style.display = 'none';
+        document.getElementById('sub-pelanggan').style.display = 'none';
+        document.getElementById('sub-backup').style.display = 'none';
+        document.getElementById('sub-riwayat').style.display = 'none';
+        
         document.getElementById('main-menu-grid').style.display = 'grid'; 
-        document.getElementById('banner-sawer').style.display = 'block'; // Banner langsung muncul
+        document.getElementById('banner-sawer').style.display = 'block'; 
         document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
         idDompetAktif = null;
     }
@@ -1004,7 +1054,9 @@
     function ubahFilterBeranda() { filterSaatIni = document.getElementById('filterWaktuBeranda').value; document.getElementById('wadahFilterCustom').style.display = filterSaatIni === 'custom' ? 'block' : 'none'; document.getElementById('checkSemuaTransaksi').checked = false; renderDaftarTransaksiBeranda(); }
     function terapkanFilterCustom() { document.getElementById('checkSemuaTransaksi').checked = false; renderDaftarTransaksiBeranda(); }
     function togglePilihSemuaTransaksi() { let chk = document.getElementById('checkSemuaTransaksi').checked; document.querySelectorAll('.check-transaksi-beranda').forEach(cb => cb.checked = chk); }
+    function togglePilihSemuaTransaksiRiwayat() { let chk = document.getElementById('checkSemuaTransaksiRiwayat').checked; document.querySelectorAll('.check-transaksi-riwayat').forEach(cb => cb.checked = chk); }
     function hapusTransaksiTerpilih() { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksi').checked=false; simpanData(); } }
+    function hapusTransaksiTerpilihRiwayat() { let arr = Array.from(document.querySelectorAll('.check-transaksi-riwayat:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksiRiwayat').checked=false; simpanData(); } }
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
 
     let tempStatusLama = "";
@@ -1045,6 +1097,7 @@
     function tutupModalWA() { document.getElementById('modal-pilih-wa').classList.remove('active'); }
     function eksekusiKirimWA(tp) { tutupModalWA(); let url = tp==='biasa'?`intent://send?text=${tempPesanWA}#Intent;scheme=whatsapp;package=com.whatsapp;end`:tp==='bisnis'?`intent://send?text=${tempPesanWA}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`:`https://api.whatsapp.com/send?text=${tempPesanWA}`; window.location.href = url; }
     function kirimWABorongan(js) { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if (!arr.length) return alert("Centang dulu!"); prosesKirimWA(js, arr); }
+    function kirimWABoronganRiwayat(js) { let arr = Array.from(document.querySelectorAll('.check-transaksi-riwayat:checked')).map(cb => String(cb.value)); if (!arr.length) return alert("Centang dulu!"); prosesKirimWA(js, arr); }
     function prosesKirimWA(js, arr) {
         let dt = db.transaksi.filter(t => arr.includes(String(t.id))); let nm = dt[0].pembeli || 'Pelanggan'; let prd = dt.map(t => `- [${formatTanggalIndo(t.tanggal)}] ${t.namaProduk} (Rp ${formatRupiah(t.total)})`).join('\n');
         let tj = dt.reduce((s, t) => s + t.total, 0), tm = dt.reduce((s, t) => s + t.modal, 0), tu = dt.reduce((s, t) => s + t.untung, 0);
@@ -1166,15 +1219,16 @@
         document.getElementById('rekapHarian').innerText = formatRupiah(oh); document.getElementById('labaHarian').innerText = formatRupiah(lh); document.getElementById('rekapBulanan').innerText = formatRupiah(ob); document.getElementById('labaBulanan').innerText = formatRupiah(lb);
         document.getElementById('rekapPiutang').innerText = formatRupiah(totalPiutang); document.getElementById('rekapUtang').innerText = formatRupiah(totalUtang);
 
-        renderDaftarTransaksiBeranda();
-        renderDaftarProduk(); 
-        renderDaftarPelanggan(); 
-        renderKasbonList();
+        // RENDER SEMUA DATA DENGAN AMAN
+        try { renderDaftarTransaksiBeranda(); } catch(e) {}
+        try { renderDaftarProduk(); } catch(e) {}
+        try { renderDaftarPelanggan(); } catch(e) {}
+        try { renderKasbonList(); } catch(e) {}
         
         document.getElementById('listDompet').innerHTML = db.dompet.map(d => `<div class="list-item" style="border-left: 4px solid var(--primary); padding: 12px; background: #fdfdfd; margin-bottom:12px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div class="flex-between" style="align-items: center;"><div><b style="font-size: 15px;">${d.nama}</b><br><span class="text-small" style="color:#888;">${d.kategori || 'Kas Fisik'}</span><br><span class="text-green" style="font-size: 14px; font-weight: bold;">Rp ${formatRupiah(d.saldo)}</span></div><div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;"><button type="button" class="btn-outline" style="width:auto; padding:6px 12px; margin:0; font-size:11px; background: #eef2f5;" onclick="bukaDetailDompet('${d.id}')">📝 Hitung Pecahan ➡</button><div style="display:flex; gap:5px;"><button type="button" class="btn-warning" style="width:auto; padding:4px 8px; margin:0; font-size:10px; border:none;" onclick="ubahSaldoDompet('${d.id}')">Edit Saldo</button><button type="button" class="btn-red" style="width:auto; padding:4px 8px; margin:0; font-size:10px;" onclick="hapusDompetItem('${d.id}')">Hapus</button></div></div></div></div>`).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Belum ada dompet.</div>';
         
-        renderAlokasiList();
+        try { renderAlokasiList(); } catch(e) {}
     }
 </script>
 </body>
-                                                                                                                                                                         </html>
+</html>
