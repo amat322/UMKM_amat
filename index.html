@@ -148,6 +148,26 @@
         </div>
     </div>
 
+    <div id="modal-edit-rincian" class="modal-popup">
+        <div class="popup-content">
+            <h4 style="margin-bottom: 10px;">✏️ Edit Rincian Barang</h4>
+            <form onsubmit="eksekusiSimpanRincian(event)">
+                <input type="hidden" id="editRincianUtangId">
+                <input type="hidden" id="editRincianIdx">
+                <label class="text-small" style="text-align:left; display:block;">Tanggal:</label>
+                <input type="date" id="editRincianTgl" required style="border-color: var(--primary);">
+                <label class="text-small" style="text-align:left; display:block;">Nama Produk/Barang:</label>
+                <input type="text" id="editRincianProduk" required>
+                <label class="text-small" style="text-align:left; display:block;">Harga (Rp):</label>
+                <input type="text" inputmode="numeric" id="editRincianNominal" oninput="formatInputRupiah(event)" required>
+                <div class="grid-2" style="margin-top: 15px;">
+                    <button type="submit" class="btn-green">Simpan</button>
+                    <button type="button" class="btn-red" onclick="tutupModalRincian()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-pindah-kategori" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">🗂️ Pindah Folder Kategori</h4>
@@ -174,26 +194,6 @@
                 <div class="grid-2" style="margin-top: 15px;">
                     <button type="submit" class="btn-green">Simpan</button>
                     <button type="button" class="btn-red" onclick="tutupModalCicilan()">Batal</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-<div id="modal-edit-rincian" class="modal-popup">
-        <div class="popup-content">
-            <h4 style="margin-bottom: 10px;">✏️ Edit Rincian Barang</h4>
-            <form onsubmit="eksekusiSimpanRincian(event)">
-                <input type="hidden" id="editRincianUtangId">
-                <input type="hidden" id="editRincianIdx">
-                <label class="text-small" style="text-align:left; display:block;">Tanggal:</label>
-                <input type="date" id="editRincianTgl" required style="border-color: var(--primary);">
-                <label class="text-small" style="text-align:left; display:block;">Nama Produk/Barang:</label>
-                <input type="text" id="editRincianProduk" required>
-                <label class="text-small" style="text-align:left; display:block;">Harga (Rp):</label>
-                <input type="text" inputmode="numeric" id="editRincianNominal" oninput="formatInputRupiah(event)" required>
-                <div class="grid-2" style="margin-top: 15px;">
-                    <button type="submit" class="btn-green">Simpan</button>
-                    <button type="button" class="btn-red" onclick="tutupModalRincian()">Batal</button>
                 </div>
             </form>
         </div>
@@ -262,9 +262,9 @@
         </div>
         
         <div class="card">
-            <h4>Riwayat Lunas & Filter</h4>
+            <h4>Riwayat & Filter</h4>
             <select id="filterWaktuBeranda" onchange="ubahFilterBeranda()" style="margin-top: 5px; font-weight: bold;">
-                <option value="semua">📂 Semua Transaksi (Lunas)</option>
+                <option value="semua">📂 Semua Transaksi</option>
                 <option value="harian">📅 Transaksi Harian (Hari Ini)</option>
                 <option value="mingguan">📆 Transaksi Mingguan (7 Hari Terakhir)</option>
                 <option value="bulanan">🗓️ Transaksi Bulanan (Bulan Ini)</option>
@@ -278,7 +278,7 @@
             </div>
 
             <div class="flex-between" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
-                <span class="text-small">Jumlah Transaksi Lunas:</span><span class="text-blue" id="jumlahTransaksiBeranda" style="font-size: 18px; font-weight: bold;">0</span>
+                <span class="text-small">Jumlah Transaksi:</span><span class="text-blue" id="jumlahTransaksiBeranda" style="font-size: 18px; font-weight: bold;">0</span>
             </div>
             
             <div style="background: #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffdf7e;">
@@ -446,7 +446,6 @@
         <div id="sub-wa" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Pengaturan Struk WA</h4>
-            
             <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px; margin-top:10px;">
                 <b style="color: #0056b3; font-size: 12px;">💡 Panduan Kode Otomatis:</b><br>
                 <span style="font-size: 11px; color: #333;">
@@ -456,7 +455,6 @@
                     <b>[Sisa]</b>, <b>[TotalDibayar]</b>, <b>[RiwayatCicilan]</b> = Tagihan
                 </span>
             </div>
-
             <label class="text-small text-blue"><b>1. Struk Pembelian Lunas</b></label><textarea id="tplPelanggan" rows="3"></textarea>
             <label class="text-small text-red"><b>2. Tagihan Utang</b></label><textarea id="tplTagihan" rows="5"></textarea>
             <label class="text-small text-green"><b>3. Laporan Transaksi</b></label><textarea id="tplBos" rows="3"></textarea>
@@ -531,19 +529,39 @@
 
         <div id="sub-backup" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <h4 style="color:var(--primary); margin-bottom:5px;">📋 Salin Data (Ekspor)</h4>
-            <p class="text-small" style="margin-bottom:15px;">Pilih data yang ingin disalin ke Excel.</p>
-            <div class="grid-3">
-                <button type="button" class="btn-outline" style="font-size:11px; padding:8px;" onclick="salinDataExcel('transaksi')">📑 Transaksi</button>
+            <h4 style="color:var(--primary); margin-bottom:5px;">📋 Salin Data (Ekspor Excel)</h4>
+            <p class="text-small" style="margin-bottom:10px;">Pilih data yang ingin disalin ke Excel.</p>
+            
+            <div style="background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
+                <b class="text-small">📑 Ekspor Transaksi:</b>
+                <div class="grid-3" style="margin-top:5px;">
+                    <button type="button" class="btn-green" style="font-size:10px; padding:6px;" onclick="salinDataExcel('transaksi-lunas')">✅ Lunas</button>
+                    <button type="button" class="btn-outline" style="border-color:#dc3545; color:#dc3545; font-size:10px; padding:6px;" onclick="salinDataExcel('transaksi-kasbon')">📒 Kasbon</button>
+                    <button type="button" class="btn-outline" style="font-size:10px; padding:6px;" onclick="salinDataExcel('transaksi-semua')">📂 Semua</button>
+                </div>
+            </div>
+            
+            <div class="grid-2">
                 <button type="button" class="btn-outline" style="font-size:11px; padding:8px;" onclick="salinDataExcel('produk')">📦 Produk</button>
                 <button type="button" class="btn-outline" style="font-size:11px; padding:8px;" onclick="salinDataExcel('pelanggan')">👥 Pelanggan</button>
             </div>
+            
             <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
-            <h4 style="color:#28a745; margin-bottom:5px;">📥 Tempel Data (Impor)</h4>
+            
+            <h4 style="color:#28a745; margin-bottom:5px;">📥 Tempel Data (Impor dari Excel)</h4>
             <p class="text-small" style="margin-bottom:10px;">Paste teks berkolom dari Excel ke kotak ini, lalu pilih jenis datanya.</p>
             <textarea id="pasteExcelText" rows="4" placeholder="Paste (Tempel) baris kolom dari Excel di sini..."></textarea>
-            <div class="grid-3">
-                <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('transaksi')">Masukin Transaksi</button>
+            
+            <div style="background:#eef2f5; padding:10px; border-radius:8px; border:1px solid #d1e3f8; margin-bottom:15px;">
+                <b class="text-small">📥 Impor Transaksi Sebagai:</b>
+                <div class="grid-3" style="margin-top:5px;">
+                    <button type="button" class="btn-green" style="font-size:10px; padding:6px;" onclick="imporDataExcel('transaksi-lunas')">✅ Lunas</button>
+                    <button type="button" class="btn-red" style="font-size:10px; padding:6px;" onclick="imporDataExcel('transaksi-kasbon')">📒 Kasbon</button>
+                    <button type="button" class="btn-outline" style="font-size:10px; padding:6px; background:#fff;" onclick="imporDataExcel('transaksi-semua')">📂 Baca Status</button>
+                </div>
+            </div>
+
+            <div class="grid-2">
                 <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('produk')">Masukin Produk</button>
                 <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('pelanggan')">Masukin Pelanggan</button>
             </div>
@@ -762,7 +780,6 @@
     }
 
     function switchKasbonTab(tab) { kasbonTabAktif = tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('tab-btn-' + tab.toLowerCase()).classList.add('active'); renderKasbonList(); }
-    
     function toggleAccordionUtang(id) { document.getElementById('acc-'+id).classList.toggle('active'); }
 
     function renderKasbonList() {
@@ -823,7 +840,6 @@
         u.rincianBarang[idx].produk = document.getElementById('editRincianProduk').value;
         u.rincianBarang[idx].nominal = nomBaru;
         
-        // Sesuaikan Total Utang
         u.nominal = (Number(u.nominal) || 0) - nomLama + nomBaru;
         
         let transId = u.rincianBarang[idx].transId;
@@ -846,6 +862,8 @@
     }
 
     // [FUNGSI LUNAS & HAPUS UTANG UTAMA]
+    function selesaikanUtang(u) { u.status = 'Lunas'; if(u.rincianBarang) { u.rincianBarang.forEach(r => { if(r.transId) { let td = db.transaksi.find(t => String(t.id) === String(r.transId)); if(td) td.status = 'Lunas'; } else if(u.jenis === 'Piutang') { db.transaksi.push({ id: Date.now() + Math.random(), tanggal: r.tanggal||ambilTanggal(), namaProduk: r.produk || u.namaProduk || 'Pelunasan Kasbon', jumlah: 1, modal: 0, total: r.nominal, untung: r.nominal, status: 'Lunas', pembeli: u.nama, dompetId: 'none' }); } }); } }
+    
     function lunasSekaligus(id) { 
         if(confirm("Lunas & Masuk Riwayat?")) { 
             let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return; 
@@ -858,6 +876,7 @@
             selesaikanUtang(u); simpanData(); alert("Beres!"); 
         } 
     }
+    
     function hapusUtang(id) { 
         if(confirm("Hapus seluruh catatan kasbon ini?")) { 
             db.utang = db.utang.filter(u => String(u.id) !== String(id)); simpanData(); 
@@ -1000,6 +1019,7 @@
         let area = document.getElementById('area-struk');
         html2canvas(area).then(canvas => { let link = document.createElement('a'); link.download = `Struk-${Date.now()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
     }
+    
     function downloadPDFRiwayat(tipe) {
         try {
             const { jsPDF } = window.jspdf; 
@@ -1008,22 +1028,20 @@
             doc.text("Laporan Transaksi UMKM", 14, 15);
             
             let dataArr = [];
-            if(tipe === 'beranda') {
-                let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
-                let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-                
-                dataArr = db.transaksi.filter(t => {
-                    if(t.status !== 'Lunas') return false; 
-                    if(filterSaatIni==='harian') return t.tanggal===tglH; 
-                    if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; 
-                    if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); 
-                    if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
-                    if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
-                    return true;
-                });
-            } else { 
-                dataArr = db.transaksi.slice(); 
-            }
+            let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
+            let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            
+            dataArr = db.transaksi.filter(t => {
+                if(filterSaatIni==='harian') return t.tanggal===tglH; 
+                if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; 
+                if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); 
+                if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
+                if(filterSaatIni==='custom') { 
+                    let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; 
+                    return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; 
+                }
+                return true; 
+            });
 
             // MENGURUTKAN TANGGAL (MUDA KE TUA)
             dataArr.sort((a, b) => {
@@ -1032,7 +1050,6 @@
                 return a.id - b.id; 
             });
 
-            // PEMBERSIH EMOJI
             let cleanText = (str) => (str||'').toString().replace(/[^\x00-\x7F]/g, "");
 
             let body = dataArr.map(t => [ 
@@ -1178,9 +1195,13 @@
     function renderDaftarTransaksiBeranda() {
         let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
         let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        
         let data = db.transaksi.filter(t => {
-            if(t.status !== 'Lunas') return false; 
-            if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
+            // Tampilkan Lunas DAN Piutang
+            if(filterSaatIni==='harian') return t.tanggal===tglH; 
+            if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; 
+            if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); 
+            if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
             if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
             return true;
         }).slice().reverse();
@@ -1197,6 +1218,7 @@
         });
         document.getElementById('listTransaksiBerandaTabel').innerHTML = htmlTabel || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
     }
+
     function renderItemTransaksi(t, st) {
         let sc = st==='beranda'?'check-transaksi-beranda':'check-transaksi-riwayat';
         return `<tr><td class="text-center"><input type="checkbox" class="${sc}" value="${t.id}" style="margin:0;"></td><td><b>${t.pembeli}</b><br><span style="font-size:10px;">${t.status==='Lunas'?'<span class="text-green">Lunas</span>':'<span class="text-red">Ngasbon</span>'}</span></td><td>${t.namaProduk} (x${t.jumlah})</td><td class="text-right">Rp ${formatRupiah(t.modal)}</td><td class="text-right text-blue" style="font-weight:bold;">Rp ${formatRupiah(t.total)}</td><td class="text-right text-green" style="font-weight:bold;">Rp ${formatRupiah(t.untung)}</td><td class="text-center"><button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="bukaEditTransaksi('${t.id}')">E</button><button type="button" class="btn-red" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="hapusTransaksi('${t.id}')">X</button><button type="button" class="btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px; border:none;" onclick="bukaStruk('${t.id}')">🧾</button></td></tr>`;
@@ -1243,15 +1265,23 @@
     function hapusPelanggan(id) { if(confirm("Hapus kontak ini?")) { db.pelanggan = db.pelanggan.filter(p => String(p.id) !== String(id)); simpanData(); } }
     function renderDaftarPelanggan() { let kw = (document.getElementById('cariPelangganInput')||{}).value || ""; kw = kw.toLowerCase(); let pFiltered = db.pelanggan.filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let okInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) okInfo = true; }); return okInfo; }); document.getElementById('listPelanggan').innerHTML = pFiltered.map(p => { let infoHtml = (p.info||[]).map(inf => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px dashed #eee; padding-bottom:5px;"><span class="badge-info"><b>${inf.label}</b> ${inf.value}</span> <button type="button" class="btn-outline" style="padding:2px 8px; font-size:10px; border-radius:4px; border-color:#28a745; color:#28a745; width:auto; margin:0;" onclick="salinTeks('${inf.value}')">Salin</button></div>`).join(''); return `<div class="card" style="padding:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.1);"><div class="flex-between" style="margin-bottom:8px; border-bottom:2px solid var(--primary); padding-bottom:5px;"><b style="font-size:15px;">👤 ${p.nama}</b><div style="display:flex; gap:5px;"><button type="button" class="btn-outline" style="padding:2px 8px; font-size:10px; width:auto; margin:0;" onclick="editPelangganList('${p.id}')">Edit</button><button type="button" class="btn-red" style="padding:2px 8px; font-size:10px; width:auto; margin:0;" onclick="hapusPelanggan('${p.id}')">Hapus</button></div></div>${infoHtml}</div>`; }).join('') || '<div class="text-small text-center" style="padding:10px;">Data tidak ditemukan</div>'; }
 
-    // ================= EXCEL PINTAR DENGAN FALLBACK =================
+    // ================= EXCEL PINTAR DENGAN FILTER =================
     function salinDataExcel(jenis) { 
         let text = ""; 
-        if(jenis === 'transaksi') { 
-            text = "Tanggal\tHari\tPelanggan\tProduk\tModal\tJual\tUntung\n"; 
-            db.transaksi.forEach(t => { 
+        if(jenis.startsWith('transaksi')) { 
+            text = "Tanggal\tHari\tPelanggan\tProduk\tModal\tJual\tUntung\tStatus\n"; 
+            
+            let dataEkspor = db.transaksi;
+            if(jenis === 'transaksi-lunas') {
+                dataEkspor = db.transaksi.filter(t => t.status === 'Lunas');
+            } else if (jenis === 'transaksi-kasbon') {
+                dataEkspor = db.transaksi.filter(t => t.status !== 'Lunas');
+            }
+
+            dataEkspor.forEach(t => { 
                 let pel = (t.pembeli||'Umum').toString().replace(/\t|\n/g,' '); 
                 let prod = (t.namaProduk||'').toString().replace(/\t|\n/g,' '); 
-                text += `${t.tanggal||''}\t${t.tanggal?getNamaHari(t.tanggal):''}\t${pel}\t${prod}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\n`; 
+                text += `${t.tanggal||''}\t${t.tanggal?getNamaHari(t.tanggal):''}\t${pel}\t${prod}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\t${t.status||'Lunas'}\n`; 
             }); 
         } else if (jenis === 'produk') { 
             text = "Nama Produk\tKategori\tHarga Modal\tHarga Jual\n"; 
@@ -1274,12 +1304,23 @@
         let text = document.getElementById('pasteExcelText').value.trim(); 
         if(!text) return alert("Silakan Paste data excel di kotak!"); 
         let baris = text.split('\n'); let sukses = 0; 
+        
         baris.forEach(line => { 
             let col = line.split('\t'); if(col.length < 2) return; 
-            if(jenis === 'transaksi') { 
-                let tgl = col[0], pel = col[2], prod = col[3], m = getAngkaMurni(col[4]), j = getAngkaMurni(col[5]), u = getAngkaMurni(col[6]); 
+            
+            if(jenis.startsWith('transaksi')) { 
+                let tgl = col[0], pel = col[2], prod = col[3], m = getAngkaMurni(col[4]), j = getAngkaMurni(col[5]), u = getAngkaMurni(col[6]), statExcel = col[7]; 
+                
                 if(tgl !== 'Tanggal' && j > 0) { 
-                    db.transaksi.push({ id: Date.now()+Math.random(), tanggal: tgl, namaProduk: prod||'Import', jumlah: 1, modal: m, total: j, untung: u||(j-m), status: 'Lunas', pembeli: pel||'Umum', dompetId: 'none' }); sukses++; 
+                    let statusFinal = 'Lunas';
+                    if(jenis === 'transaksi-lunas') statusFinal = 'Lunas';
+                    else if(jenis === 'transaksi-kasbon') statusFinal = 'Piutang';
+                    else if(jenis === 'transaksi-semua') statusFinal = (statExcel && statExcel.trim() !== '') ? statExcel.trim() : 'Lunas';
+
+                    let tBaru = { id: Date.now()+Math.random(), tanggal: tgl, namaProduk: prod||'Import', jumlah: 1, modal: m, total: j, untung: u||(j-m), status: statusFinal, pembeli: pel||'Umum', dompetId: 'none' };
+                    db.transaksi.push(tBaru); 
+                    if(statusFinal !== 'Lunas') tambahUtangOtomatis(tBaru);
+                    sukses++; 
                 } 
             } else if(jenis === 'produk') { 
                 let nama = col[0], kat = col[1], m = getAngkaMurni(col[2]), j = getAngkaMurni(col[3]); 
@@ -1301,7 +1342,7 @@
                 } 
             } 
         }); 
-        document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} diimpor!`); 
+        document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} berhasil diimpor!`); 
     }
     
     // ================= ALOKASI BAGI HASIL (ANTI-NAN) =================
@@ -1403,4 +1444,4 @@
     }
 </script>
 </body>
-</html>
+                </html>
