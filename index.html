@@ -717,7 +717,7 @@
         } catch(err) { alert("Error Kasir: " + err.message); }
     }
 
- // ================= FUNGSI UTANG/PIUTANG & CICILAN =================
+    // ================= FUNGSI UTANG/PIUTANG & CICILAN =================
     function eksekusiTambahUtang(e) {
         e.preventDefault();
         try {
@@ -744,14 +744,17 @@
 
     function switchKasbonTab(tab) { kasbonTabAktif = tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('tab-btn-' + tab.toLowerCase()).classList.add('active'); renderKasbonList(); }
     
+    function toggleAccordionUtang(id) { document.getElementById('acc-'+id).classList.toggle('active'); }
+
     function renderKasbonList() {
         let kw = (document.getElementById('cariKasbonInput') || {}).value || ""; kw = kw.toLowerCase();
         let filterUtang = db.utang.filter(u => u.status !== 'Lunas' && u.jenis === kasbonTabAktif && u.nama.toLowerCase().includes(kw));
 
         document.getElementById('listUtang').innerHTML = filterUtang.map(u => {
-            let tD = u.cicilan?u.cicilan.reduce((a, c)=>a+c.nominal,0):0; let sU = u.nominal-tD;
+            let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+            let sU = (u.nominal || 0) - tD;
             
-            // PERBAIKAN: Gunakan Index (idx) alih-alih c.id supaya data lama tetap bisa diedit
+            // PERBAIKAN: Gunakan Index (idx) supaya data lama tetap bisa diedit
             let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map((c, idx) => `
                 <div class="cicilan-item flex-between" style="border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                     <span>${formatTanggalIndo(c.tanggal)}</span>
@@ -902,7 +905,7 @@
         let area = document.getElementById('area-struk');
         html2canvas(area).then(canvas => { let link = document.createElement('a'); link.download = `Struk-${Date.now()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
     }
-   function downloadPDFRiwayat(tipe) {
+    function downloadPDFRiwayat(tipe) {
         try {
             const { jsPDF } = window.jspdf; 
             const doc = new jsPDF();
@@ -922,16 +925,16 @@
                     if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
                     if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
                     return true;
-                }); // <-- HAPUS .reverse() DI SINI
+                });
             } else { 
-                dataArr = db.transaksi.slice(); // <-- HAPUS .reverse() DI SINI JUGA
+                dataArr = db.transaksi.slice(); 
             }
 
-            // MESIN PENGURUT TANGGAL (Dari Tanggal Muda ke Tanggal Tua)
+            // MENGURUTKAN TANGGAL (MUDA KE TUA)
             dataArr.sort((a, b) => {
                 if (a.tanggal < b.tanggal) return -1;
                 if (a.tanggal > b.tanggal) return 1;
-                return a.id - b.id; // Kalau tanggalnya sama, urutkan berdasarkan jam input
+                return a.id - b.id; 
             });
 
             // PEMBERSIH EMOJI
@@ -1122,8 +1125,8 @@
     
     function kirimWATagihan(id) {
         let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return; 
-        let dibayar = u.cicilan ? u.cicilan.reduce((a,c) => a + c.nominal, 0) : 0;
-        let sisa = u.nominal - dibayar;
+        let dibayar = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+        let sisa = (Number(u.nominal) || 0) - dibayar;
         let prd = u.rincianBarang && u.rincianBarang.length ? u.rincianBarang.map(r => `- [${formatTanggalIndo(r.tanggal)}] ${r.produk} (Rp ${formatRupiah(r.nominal)})`).join('\n') : `- ${u.namaProduk}`;
         let riwayatCicilan = u.cicilan && u.cicilan.length ? u.cicilan.map(c => `✅ ${formatTanggalIndo(c.tanggal)} : Rp ${formatRupiah(c.nominal)}`).join('\n') : `Belum ada pembayaran.`;
         let psn = db.templateWA.tagihan.replace(/\[Nama\]/gi, u.nama).replace(/\[Produk\]/gi, prd).replace(/\[Total\]/gi, formatRupiah(u.nominal)).replace(/\[TotalDibayar\]/gi, formatRupiah(dibayar)).replace(/\[RiwayatCicilan\]/gi, riwayatCicilan).replace(/\[Sisa\]/gi, formatRupiah(sisa)).replace(/\[Tgl\]/gi, formatTanggalIndo(ambilTanggal()));
@@ -1240,8 +1243,8 @@
         let p = document.getElementById('periodeAlokasi').value, kU = document.getElementById('cbKurangiUtang').checked, kP = document.getElementById('cbKurangiPiutang').checked, hU = document.getElementById('cbHanyaUntung').checked, tH = ambilTanggal(), bI = tH.substring(0, 7);
         let dt = new Date(); dt.setDate(dt.getDate()-7); let tM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
         let dh = db.transaksi.reduce((s, t) => { let ok=false; if(p==='semua') ok=true; else if(p==='bulanIni') ok=t.tanggal.startsWith(bI); else if(p==='hariIni') ok=t.tanggal===tH; else if(p==='mingguan') ok=(t.tanggal>=tM&&t.tanggal<=tH); else if(p==='custom') { let m=document.getElementById('tglMulaiAlokasi').value, a=document.getElementById('tglAkhirAlokasi').value; if(m&&a) ok=(t.tanggal>=m&&t.tanggal<=a); } return ok?s+(hU?t.untung:t.total):s; }, 0);
-        if(kP) dh -= db.utang.filter(u=>u.jenis==='Piutang'&&u.status!=='Lunas').reduce((s,u)=>s+(u.nominal-(u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0)),0);
-        if(kU) dh -= db.utang.filter(u=>u.jenis==='Utang'&&u.status!=='Lunas').reduce((s,u)=>s+(u.nominal-(u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0)),0);
+        if(kP) dh -= db.utang.filter(u=>u.jenis==='Piutang'&&u.status!=='Lunas').reduce((s,u)=>s+((Number(u.nominal)||0)-(Array.isArray(u.cicilan)?u.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0):0)),0);
+        if(kU) dh -= db.utang.filter(u=>u.jenis==='Utang'&&u.status!=='Lunas').reduce((s,u)=>s+((Number(u.nominal)||0)-(Array.isArray(u.cicilan)?u.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0):0)),0);
         dh = dh<0?0:dh; document.getElementById('labelDasarHitung').innerText = hU?"Total Laba Tunai:":"Total Omset Tunai:"; document.getElementById('labaBersihAlokasi').innerText = formatRupiah(dh); document.getElementById('labaBersihAlokasi').dataset.laba = dh; hitungBagiHasil();
     }
     function hitungBagiHasil() { 
@@ -1260,8 +1263,8 @@
 
     function updateSemuaTampilan() {
         let sal = db.dompet.reduce((s, d) => s + parseInt(d.saldo||0), 0); 
-        let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((s, u) => s + (u.nominal - (u.cicilan ? u.cicilan.reduce((a,c) => a+c.nominal, 0) : 0)), 0);
-        let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((s, u) => s + (u.nominal - (u.cicilan ? u.cicilan.reduce((a,c) => a+c.nominal, 0) : 0)), 0);
+        let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
+        let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
         
         let salTampil = sal; let isSimulasi = false;
         if (db.simulasi.piutang) { salTampil += totalPiutang; isSimulasi = true; }
@@ -1305,4 +1308,4 @@
     }
 </script>
 </body>
-</html>
+                                                                                                                    </html>
