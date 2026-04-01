@@ -86,8 +86,6 @@
         .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
         .table-excel tr:hover { background-color: #f1f7ff; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
 
         .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
         .info-row input { margin-bottom: 0; }
@@ -100,8 +98,13 @@
         .kat-content { display: none; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 0 0 8px 8px; margin-top: -5px; margin-bottom: 15px; }
         .kat-content.active { display: block; }
         
+        /* Desain Struk */
         .struk-kertas { background: #fff; color: #000; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; text-align: left; width: 100%; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
+        
+        /* Animasi Banner Sawer */
+        .banner-sawer { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; margin-top: 5px; }
+        .banner-sawer:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -119,6 +122,15 @@
             <button type="button" class="btn-green" style="background: #128C7E;" onclick="eksekusiKirimWA('bisnis')">💼 WhatsApp Business</button>
             <button type="button" class="btn-outline" style="border-color: #007bff; color: #007bff; margin-bottom: 15px;" onclick="eksekusiKirimWA('umum')">🌐 WA Web / Pilihan Sistem</button>
             <button type="button" class="btn-red" style="margin-bottom: 0; width: auto; padding: 8px 30px;" onclick="tutupModalWA()">❌ Batal</button>
+        </div>
+    </div>
+
+    <div id="modal-qris" class="modal-popup">
+        <div class="popup-content" style="background:#fff; padding: 20px;">
+            <h4 style="margin-bottom: 5px; color:#d81b60;">☕ Sawer Mie Ayam</h4>
+            <p class="text-small" style="margin-bottom: 15px;">Sawer buat beli mie ayam hehehe 🍜</p>
+            <img src="https://i.supaimg.com/ad460eb2-b309-4aa9-b61c-59eea64d0f56/84282f7b-0886-40a8-b4cc-752e51042834.png" style="width: 100%; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee;">
+            <button type="button" class="btn-red" onclick="tutupModalQRIS()">Tutup</button>
         </div>
     </div>
 
@@ -165,12 +177,11 @@
             <p class="text-small" style="margin-bottom: 15px;">Info: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
             <form onsubmit="eksekusiSimpanCicilan(event)">
                 <input type="hidden" id="cicilanUtangId">
-                <input type="hidden" id="editCicilanId"> <label class="text-small" style="text-align:left; display:block;">Tanggal Bayar:</label>
+                <input type="hidden" id="editCicilanId"> 
+                <label class="text-small" style="text-align:left; display:block;">Tanggal Bayar:</label>
                 <input type="date" id="cicilanTgl" required style="border-color: var(--primary);">
-                
                 <label class="text-small" style="text-align:left; display:block;">Nominal Bayar (Rp):</label>
                 <input type="text" inputmode="numeric" id="cicilanNominal" placeholder="0" oninput="formatInputRupiah(event)" required>
-                
                 <div class="grid-2" style="margin-top: 15px;">
                     <button type="submit" class="btn-green">Simpan</button>
                     <button type="button" class="btn-red" onclick="tutupModalCicilan()">Batal</button>
@@ -352,8 +363,13 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-portal')"><span>⚖️</span>Simulasi Kas</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-wa')"><span>📱</span>Struk WA</div>
-            <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
+        </div>
+        
+        <div id="banner-sawer" class="banner-sawer" onclick="bukaModalQRIS()">
+            <h4 style="color: #d81b60; margin-bottom: 5px;">☕ Sawer Developer</h4>
+            <p style="font-size: 12px; color: #a80746;">Sawer buat beli mie ayam hehehe 🍜</p>
         </div>
 
         <div id="sub-tema" class="card" style="display:none;">
@@ -391,7 +407,7 @@
         <div id="sub-dompet" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Buat Dompet Baru</h4>
-            <form onsubmit="tambahDompet(event)" style="margin-top: 10px;">
+            <form onsubmit="eksekusiTambahDompet(event)" style="margin-top: 10px;">
                 <input type="text" id="namaDompetBaru" placeholder="Nama Dompet (Misal: Laci Kasir)" required>
                 <select id="kategoriDompetBaru"><option value="Kas Fisik">Kategori: Kas Fisik (Tunai)</option><option value="Bank Digital">Kategori: Bank / Saldo Digital</option></select>
                 <input type="text" inputmode="numeric" id="saldoAwalDompet" placeholder="Saldo Awal Tercatat (Rp)" oninput="formatInputRupiah(event)" required>
@@ -419,6 +435,17 @@
         <div id="sub-wa" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>Pengaturan Struk WA</h4>
+            
+            <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
+                <b style="color: #0056b3; font-size: 12px;">💡 Panduan Kode Otomatis:</b><br>
+                <span style="font-size: 11px; color: #333;">
+                    <b>[Nama]</b> = Nama | <b>[Tgl]</b> = Tanggal Transaksi<br>
+                    <b>[Produk]</b> = Daftar Belanja | <b>[Total]</b> = Total Harga<br>
+                    <b>[Modal]</b> & <b>[Untung]</b> = Untuk Laporan Bos<br>
+                    <b>[Sisa]</b>, <b>[TotalDibayar]</b>, <b>[RiwayatCicilan]</b> = Tagihan Kasbon
+                </span>
+            </div>
+
             <label class="text-small text-blue"><b>1. Struk Pembelian Lunas</b></label><textarea id="tplPelanggan" rows="3"></textarea>
             <label class="text-small text-red"><b>2. Tagihan Utang</b></label><textarea id="tplTagihan" rows="5"></textarea>
             <label class="text-small text-green"><b>3. Laporan Transaksi</b></label><textarea id="tplBos" rows="3"></textarea>
@@ -637,9 +664,14 @@
     function kembaliKeMenu() { 
         document.querySelectorAll('#page-menu > div').forEach(div => div.style.display = 'none');
         document.getElementById('main-menu-grid').style.display = 'grid'; 
+        document.getElementById('banner-sawer').style.display = 'block'; // Tampilkan lagi banner sawernya
         document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
         idDompetAktif = null;
     }
+
+    // ================= FUNGSI SAWER QRIS =================
+    function bukaModalQRIS() { document.getElementById('modal-qris').classList.add('active'); }
+    function tutupModalQRIS() { document.getElementById('modal-qris').classList.remove('active'); }
 
     // ================= FUNGSI KASIR =================
     function eksekusiKasir(e) {
@@ -682,14 +714,22 @@
         try {
             let nmUtang = document.getElementById('labelUtangPelanggan').innerText.trim();
             if(nmUtang === "" || nmUtang === "Umum / Pelanggan Baru") nmUtang = "Umum";
+
             let n = getAngkaMurni(document.getElementById('nominalUtang').value);
             let j = document.getElementById('jenisUtang').value;
             if(n <= 0) return alert("Silakan isi nominal uangnya terlebih dahulu!");
+
             let ex = db.utang.find(u => u.nama === nmUtang && u.jenis === j && u.status !== 'Lunas');
             let r = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Pinjaman/Manual", nominal: n };
+            
             if(ex) { ex.nominal += n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); } 
             else { db.utang.push({ id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r] }); }
-            document.getElementById('nominalUtang').value=''; document.getElementById('utangPelangganId').value=''; document.getElementById('labelUtangPelanggan').innerHTML='<b>Umum / Pelanggan Baru</b>'; simpanData(); alert("Catatan " + j + " berhasil disimpan!");
+            
+            document.getElementById('nominalUtang').value=''; 
+            document.getElementById('utangPelangganId').value=''; 
+            document.getElementById('labelUtangPelanggan').innerHTML='<b>Umum / Pelanggan Baru</b>'; 
+            simpanData(); 
+            alert("Catatan " + j + " berhasil disimpan!");
         } catch(e) { alert("Error Kasbon: " + e.message); }
     }
 
@@ -701,7 +741,6 @@
         document.getElementById('listUtang').innerHTML = filterUtang.map(u => {
             let tD = u.cicilan?u.cicilan.reduce((a, c)=>a+c.nominal,0):0; let sU = u.nominal-tD;
             
-            // TOMBOL EDIT & HAPUS CICILAN
             let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map(c => `
                 <div class="cicilan-item flex-between" style="border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                     <span>${formatTanggalIndo(c.tanggal)}</span>
@@ -721,7 +760,7 @@
         let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
         let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,c)=>a+c.nominal,0):0);
         document.getElementById('cicilanUtangId').value = id;
-        document.getElementById('editCicilanId').value = ""; // Mode Tambah
+        document.getElementById('editCicilanId').value = ""; 
         document.getElementById('cicilanSisaTampil').innerText = "Catat Baru (Sisa Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = ambilTanggal(); 
         document.getElementById('cicilanNominal').value = "";
@@ -734,7 +773,7 @@
         let s = u.nominal - (u.cicilan?u.cicilan.reduce((a,x)=>a+x.nominal,0):0) + c.nominal; 
         
         document.getElementById('cicilanUtangId').value = idUtang;
-        document.getElementById('editCicilanId').value = idCicilan; // Mode Edit
+        document.getElementById('editCicilanId').value = idCicilan; 
         document.getElementById('cicilanSisaTampil').innerText = "Edit (Max Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = c.tanggal; 
         document.getElementById('cicilanNominal').value = formatRupiah(c.nominal);
@@ -764,11 +803,9 @@
             if(!u.cicilan) u.cicilan=[]; 
             
             if(idEdit !== "") {
-                // EDIT
                 let c = u.cicilan.find(x => String(x.id) === String(idEdit));
                 if(c) { c.nominal = nom; c.tanggal = tgl; c.hari = getNamaHari(tgl); }
             } else {
-                // TAMBAH BARU
                 u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom }); 
             }
             
@@ -1098,7 +1135,7 @@
         let dtFilter = new Date(); dtFilter.setDate(dtFilter.getDate()-7); let tglM = `${dtFilter.getFullYear()}-${String(dtFilter.getMonth()+1).padStart(2,'0')}-${String(dtFilter.getDate()).padStart(2,'0')}`;
         let dataTabel = db.transaksi.filter(t => {
             if(t.status !== 'Lunas') return false; 
-            if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(tglH.substring(0,4));
+            if(filterSaatIni==='harian') return t.tanggal===tglH; if(filterSaatIni==='mingguan') return t.tanggal>=tglM&&t.tanggal<=tglH; if(filterSaatIni==='bulanan') return t.tanggal.startsWith(blnI); if(filterSaatIni==='tahunan') return t.tanggal.startsWith(thnI);
             if(filterSaatIni==='custom') { let m=document.getElementById('tglMulaiCustom').value, a=document.getElementById('tglAkhirCustom').value; return (m&&a)?(t.tanggal>=m&&t.tanggal<=a):true; }
             return true;
         }).slice().reverse();
@@ -1125,4 +1162,4 @@
     }
 </script>
 </body>
-        </html>
+                    </html>
