@@ -1526,26 +1526,30 @@
         document.getElementById('peringatanPersen').style.display = (pTot>0&&pTot!==100)?'block':'none'; 
     }
 
-    function updateSemuaTampilan() {
+function updateSemuaTampilan() {
         let sal = db.dompet.reduce((s, d) => s + parseInt(d.saldo||0), 0); 
         let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
         let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
         
-        let salTampil = sal; let isSimulasi = false;
-        if (db.simulasi.piutang) { salTampil += totalPiutang; isSimulasi = true; }
-        if (db.simulasi.utang) { salTampil -= totalUtang; isSimulasi = true; }
-
+        // 1. HEADER MURNI UANG ASLI (TIDAK DITAMBAH KASBON/PIUTANG)
         let elBadge = document.getElementById('badge-header-saldo');
-        if (isSimulasi) { elBadge.classList.add('saldo-simulasi'); elBadge.innerHTML = `⚠️ Saldo Simulasi: Rp <span id="displaySaldo">${formatRupiah(salTampil)}</span>`; } 
-        else { elBadge.classList.remove('saldo-simulasi'); elBadge.innerHTML = `Total Saldo Sistem: Rp <span id="displaySaldo">${formatRupiah(salTampil)}</span>`; }
+        elBadge.classList.remove('saldo-simulasi'); 
+        elBadge.innerHTML = `Total Saldo Sistem: Rp <span id="displaySaldo">${formatRupiah(sal)}</span>`; 
+
+        // 2. SIMULASI KASBON HANYA BERLAKU DI DALAM MENU PORTAL
+        let salPortal = sal;
+        if (db.simulasi.piutang) { salPortal += totalPiutang; }
+        if (db.simulasi.utang) { salPortal -= totalUtang; }
 
         if(document.getElementById('portal-saldo-asli')) {
             document.getElementById('portal-saldo-asli').innerText = formatRupiah(sal);
             document.getElementById('portal-angka-piutang').innerText = formatRupiah(totalPiutang);
             document.getElementById('portal-angka-utang').innerText = formatRupiah(totalUtang);
             let elTotal = document.getElementById('portal-total-akhir');
-            elTotal.innerText = formatRupiah(salTampil); elTotal.className = salTampil < 0 ? "text-red" : "text-blue";
-            document.getElementById('cb-portal-piutang').checked = db.simulasi.piutang; document.getElementById('cb-portal-utang').checked = db.simulasi.utang;
+            elTotal.innerText = formatRupiah(salPortal); 
+            elTotal.className = salPortal < 0 ? "text-red" : "text-blue";
+            document.getElementById('cb-portal-piutang').checked = db.simulasi.piutang; 
+            document.getElementById('cb-portal-utang').checked = db.simulasi.utang;
         }
 
         let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), oh=0, lh=0, ob=0, lb=0;
