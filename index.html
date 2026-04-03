@@ -554,6 +554,9 @@
                 </div>
                 <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #aaa;">
                     <label style="display: flex; align-items: center; font-size: 12px; margin-top: 5px;"><input type="checkbox" id="cbHanyaUntung" onchange="updateLabaAlokasi()" checked style="width: auto; margin: 0 8px 0 0;"> <b style="color:var(--primary);">Bagi dr Keuntungan Saja</b></label>
+                    
+                    <label style="display: flex; align-items: center; font-size: 12px; margin-top: 8px; background:#ffebee; padding:5px; border-radius:5px; border:1px solid #ffcdd2;"><input type="checkbox" id="cbHanyaKasbon" onchange="updateLabaAlokasi()" style="width: auto; margin: 0 8px 0 0;"> <b class="text-red">Khusus dr Transaksi Kasbon Saja</b></label>
+                    
                     <label style="display: flex; align-items: center; font-size: 12px; margin-top: 8px;"><input type="checkbox" id="cbKurangiPiutang" onchange="updateLabaAlokasi()" checked style="width: auto; margin: 0 8px 0 0;"> Kurangi dgn Uang di Luar</label>
                     <label style="display: flex; align-items: center; font-size: 12px; margin-top: 5px;"><input type="checkbox" id="cbKurangiUtang" onchange="updateLabaAlokasi()" style="width: auto; margin: 0 8px 0 0;"> Kurangi dgn Utang Saya</label>
                 </div>
@@ -1590,12 +1593,41 @@
     }
     function toggleFilterAlokasi() { document.getElementById('wadahFilterCustomAlokasi').style.display = (document.getElementById('periodeAlokasi').value === 'custom') ? 'block' : 'none'; updateLabaAlokasi(); }
     function updateLabaAlokasi() {
-        let p = document.getElementById('periodeAlokasi').value, kU = document.getElementById('cbKurangiUtang').checked, kP = document.getElementById('cbKurangiPiutang').checked, hU = document.getElementById('cbHanyaUntung').checked, tH = ambilTanggal(), bI = tH.substring(0, 7);
+        let p = document.getElementById('periodeAlokasi').value;
+        let kU = document.getElementById('cbKurangiUtang').checked;
+        let kP = document.getElementById('cbKurangiPiutang').checked;
+        let hU = document.getElementById('cbHanyaUntung').checked;
+        let hK = document.getElementById('cbHanyaKasbon') ? document.getElementById('cbHanyaKasbon').checked : false; // FITUR BARU CEK KASBON
+        
+        let tH = ambilTanggal(), bI = tH.substring(0, 7);
         let dt = new Date(); dt.setDate(dt.getDate()-7); let tM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-        let dh = db.transaksi.reduce((s, t) => { let ok=false; if(p==='semua') ok=true; else if(p==='bulanIni') ok=t.tanggal.startsWith(bI); else if(p==='hariIni') ok=t.tanggal===tH; else if(p==='mingguan') ok=(t.tanggal>=tM&&t.tanggal<=tH); else if(p==='custom') { let m=document.getElementById('tglMulaiAlokasi').value, a=document.getElementById('tglAkhirAlokasi').value; if(m&&a) ok=(t.tanggal>=m&&t.tanggal<=a); } return ok?s+(hU?t.untung:t.total):s; }, 0);
+        
+        let dh = db.transaksi.reduce((s, t) => { 
+            // JIKA DICENTANG, ABAIKAN TRANSAKSI YANG SUDAH LUNAS
+            if(hK && t.status === 'Lunas') return s;
+            
+            let ok=false; 
+            if(p==='semua') ok=true; 
+            else if(p==='bulanIni') ok=t.tanggal.startsWith(bI); 
+            else if(p==='hariIni') ok=t.tanggal===tH; 
+            else if(p==='mingguan') ok=(t.tanggal>=tM&&t.tanggal<=tH); 
+            else if(p==='custom') { let m=document.getElementById('tglMulaiAlokasi').value, a=document.getElementById('tglAkhirAlokasi').value; if(m&&a) ok=(t.tanggal>=m&&t.tanggal<=a); } 
+            
+            return ok ? s+(hU ? t.untung : t.total) : s; 
+        }, 0);
+        
         if(kP) dh -= db.utang.filter(u=>u.jenis==='Piutang'&&u.status!=='Lunas').reduce((s,u)=>s+((Number(u.nominal)||0)-(Array.isArray(u.cicilan)?u.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0):0)),0);
         if(kU) dh -= db.utang.filter(u=>u.jenis==='Utang'&&u.status!=='Lunas').reduce((s,u)=>s+((Number(u.nominal)||0)-(Array.isArray(u.cicilan)?u.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0):0)),0);
-        dh = dh<0?0:dh; document.getElementById('labelDasarHitung').innerText = hU?"Total Laba Tunai:":"Total Omset Tunai:"; document.getElementById('labaBersihAlokasi').innerText = formatRupiah(dh); document.getElementById('labaBersihAlokasi').dataset.laba = dh; hitungBagiHasil();
+        dh = dh<0 ? 0 : dh; 
+        
+        // UBAH LABEL BIAR JELAS
+        let labelTeks = hU ? "Total Laba Tunai:" : "Total Omset Tunai:";
+        if(hK) labelTeks = hU ? "Total Laba Kasbon (Ngutang):" : "Total Omset Kasbon (Ngutang):";
+
+        document.getElementById('labelDasarHitung').innerText = labelTeks; 
+        document.getElementById('labaBersihAlokasi').innerText = formatRupiah(dh); 
+        document.getElementById('labaBersihAlokasi').dataset.laba = dh; 
+        hitungBagiHasil();
     }
     function hitungBagiHasil() { 
         let t = parseInt(document.getElementById('labaBersihAlokasi').dataset.laba||0);
