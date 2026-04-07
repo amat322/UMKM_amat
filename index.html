@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -144,8 +145,17 @@
                 <div><label class="text-small">Harga Jual (Rp):</label><input type="text" inputmode="numeric" id="editTransTotal" oninput="formatInputRupiah(event)"></div>
             </div>
             <label class="text-small">Status:</label>
-            <select id="editTransStatus"><option value="Lunas">Lunas</option><option value="Piutang">Ngasbon / Piutang</option></select>
-            <button type="button" class="btn-green" onclick="eksekusiSimpanEditTransaksi()" style="margin-top: 15px;">💾 Simpan Perubahan</button>
+            <select id="editTransStatus" style="margin-bottom: 15px;"><option value="Lunas">Lunas</option><option value="Piutang">Ngasbon / Piutang</option></select>
+            
+            <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 10px;">
+                <label class="text-small text-red" style="font-weight:bold;">💼 Ambil Modal Dari:</label>
+                <select id="editTransDompetModal" style="background:#ffebee; border-color:#dc3545;"></select>
+                
+                <label class="text-small text-green" style="font-weight:bold;">📥 Uang Jual Masuk Ke:</label>
+                <select id="editTransDompetMasuk" style="background:#e8f5e9; border-color:#28a745; margin-bottom: 0;"></select>
+            </div>
+
+            <button type="button" class="btn-green" onclick="eksekusiSimpanEditTransaksi()" style="margin-top: 10px;">💾 Simpan Perubahan</button>
         </div>
     </div>
 
@@ -287,9 +297,17 @@
                 <div class="search-select" onclick="bukaPencarian('pelanggan-kasir')"><span id="labelKasirPelanggan"><b>Umum / Pelanggan Baru</b></span></div>
                 <input type="hidden" id="kasirPelangganId" value="">
                 <label class="text-small">Status Pembayaran:</label>
-                <select id="kasirStatus"><option value="Lunas">Lunas</option><option value="Piutang">Ngasbon / Piutang</option></select>
+                <select id="kasirStatus" style="margin-bottom: 15px;"><option value="Lunas">Lunas</option><option value="Piutang">Ngasbon / Piutang</option></select>
                 
-                <button type="submit" class="btn-green" style="margin-top: 15px; font-size: 16px;">💳 Proses Pembayaran</button>
+                <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 15px;">
+                    <label class="text-small text-red" style="font-weight:bold;">💼 Ambil Modal Dari Dompet:</label>
+                    <select id="kasirDompetModal" style="background:#ffebee; border-color:#dc3545; font-weight:bold;"></select>
+                    
+                    <label class="text-small text-green" style="font-weight:bold;">📥 Uang Masuk Ke Dompet (Jika Lunas):</label>
+                    <select id="kasirDompetMasuk" style="background:#e8f5e9; border-color:#28a745; font-weight:bold; margin-bottom: 0;"></select>
+                </div>
+                
+                <button type="submit" class="btn-green" style="margin-top: 5px; font-size: 16px;">💳 Proses Pembayaran</button>
             </form>
         </div>
     </div>
@@ -876,6 +894,9 @@
             let j = getAngkaMurni(document.getElementById('kasirHargaJual').value);
             let qty = parseInt(document.getElementById('kasirJumlah').value) || 0;
             
+            let dModalId = document.getElementById('kasirDompetModal').value;
+            let dMasukId = document.getElementById('kasirDompetMasuk').value;
+            
             if(!tgl) return alert("Pilih tanggal transaksi!");
             if(!nmProd) return alert("Nama produk tidak boleh kosong!");
             if(qty < 1) return alert("Jumlah barang minimal 1!");
@@ -891,13 +912,18 @@
             if(nmPel === "" || nmPel === "Umum / Pelanggan Baru") nmPel = "Umum";
             
             let stat = document.getElementById('kasirStatus').value;
-            let tr = { id: Date.now(), tanggal: tgl, namaProduk: nmProd, jumlah: qty, modal: m*qty, total: j*qty, untung: (j-m)*qty, status: stat, pembeli: nmPel, dompetId: 'none' };
+            
+            let tr = { id: Date.now(), tanggal: tgl, namaProduk: nmProd, jumlah: qty, modal: m*qty, total: j*qty, untung: (j-m)*qty, status: stat, pembeli: nmPel, dompetModal: dModalId, dompetMasuk: dMasukId };
             
             db.transaksi.push(tr); 
             if(stat !== 'Lunas') tambahUtangOtomatis(tr); 
             
+            // EKSEKUSI POTONG / TAMBAH SALDO DOMPET
+            if(dModalId !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(dModalId)); if(dm) dm.saldo -= (m * qty); }
+            if(stat === 'Lunas' && dMasukId !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(dMasukId)); if(dk) dk.saldo += (j * qty); }
+            
             document.getElementById('kasirNamaProduk').value = ''; document.getElementById('kasirHargaModal').value = ''; document.getElementById('kasirHargaJual').value = ''; document.getElementById('kasirJumlah').value = '1'; document.getElementById('kasirPelangganId').value = ''; document.getElementById('labelKasirPelanggan').innerHTML = '<b>Umum / Pelanggan Baru</b>'; document.getElementById('kasirStatus').value = 'Lunas';
-            simpanData(); alert((stat === 'Lunas' ? '✅ Lunas!' : '📝 Masuk Kasbon!') + (isBaru ? '\n(Tersimpan ke folder Umum)' : '')); 
+            simpanData(); alert((stat === 'Lunas' ? '✅ Lunas! Saldo masuk & modal terpotong.' : '📝 Masuk Kasbon! Modal terpotong.') + (isBaru ? '\n(Produk tersimpan ke folder Umum)' : '')); 
         } catch(err) { alert("Error Kasir: " + err.message); }
     }
 
@@ -1411,7 +1437,35 @@
     function tambahUtangOtomatis(t) { let existing = db.utang.find(u => u.nama === t.pembeli && u.jenis === 'Piutang' && u.status !== 'Lunas'); let rincian = { transId: t.id, tanggal: t.tanggal, hari: getNamaHari(t.tanggal), produk: t.namaProduk, nominal: t.total }; if(existing) { existing.nominal += t.total; if(!existing.rincianBarang) existing.rincianBarang=[]; existing.rincianBarang.push(rincian); } else db.utang.push({ id: Date.now(), transId: null, jenis: 'Piutang', nama: t.pembeli, namaProduk: "Multiple", nominal: t.total, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] }); }
     function hapusDariUtangOtomatis(transId) { db.utang.forEach(u => { if(u.rincianBarang) { let idx = u.rincianBarang.findIndex(r => String(r.transId) === String(transId)); if(idx > -1) { u.nominal -= u.rincianBarang[idx].nominal; u.rincianBarang.splice(idx, 1); } } }); db.utang = db.utang.filter(u => (u.rincianBarang && u.rincianBarang.length > 0) || u.nominal > 0); }
     function updateUtangOtomatis(t) { db.utang.forEach(u => { if(u.rincianBarang) { let r = u.rincianBarang.find(x => String(x.transId) === String(t.id)); if(r) { u.nominal = (u.nominal - r.nominal) + t.total; r.produk = t.namaProduk; r.nominal = t.total; r.tanggal = t.tanggal; r.hari = getNamaHari(t.tanggal); } } }); }
-    function eksekusiSimpanEditTransaksi() { let id = document.getElementById('editTransId').value; let t = db.transaksi.find(x => String(x.id) === String(id)); if(t) { t.tanggal = document.getElementById('editTransTgl').value; t.pembeli = document.getElementById('editTransPelanggan').value || 'Umum'; t.namaProduk = document.getElementById('editTransProduk').value; t.modal = getAngkaMurni(document.getElementById('editTransModal').value); t.total = getAngkaMurni(document.getElementById('editTransTotal').value); t.untung = t.total - t.modal; t.status = document.getElementById('editTransStatus').value; if(tempStatusLama==='Lunas'&&t.status==='Piutang') tambahUtangOtomatis(t); else if(tempStatusLama==='Piutang'&&t.status==='Lunas') hapusDariUtangOtomatis(t.id); else if(t.status==='Piutang') updateUtangOtomatis(t); simpanData(); tutupEditTransaksi(); } }
+    function eksekusiSimpanEditTransaksi() { 
+        let id = document.getElementById('editTransId').value; let t = db.transaksi.find(x => String(x.id) === String(id)); 
+        if(t) { 
+            // 1. KEMBALIKAN SALDO DOMPET LAMA (REVERT)
+            if(t.dompetModal && t.dompetModal !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal)); if(dm) dm.saldo += t.modal; }
+            if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
+            
+            // 2. SIMPAN DATA BARU
+            t.tanggal = document.getElementById('editTransTgl').value; 
+            t.pembeli = document.getElementById('editTransPelanggan').value || 'Umum'; 
+            t.namaProduk = document.getElementById('editTransProduk').value; 
+            t.modal = getAngkaMurni(document.getElementById('editTransModal').value); 
+            t.total = getAngkaMurni(document.getElementById('editTransTotal').value); 
+            t.untung = t.total - t.modal; 
+            t.status = document.getElementById('editTransStatus').value; 
+            t.dompetModal = document.getElementById('editTransDompetModal').value;
+            t.dompetMasuk = document.getElementById('editTransDompetMasuk').value;
+
+            // 3. POTONG/TAMBAH SALDO DOMPET BARU
+            if(t.dompetModal !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal)); if(dm) dm.saldo -= t.modal; }
+            if(t.status === 'Lunas' && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo += t.total; }
+
+            if(tempStatusLama==='Lunas'&&t.status==='Piutang') tambahUtangOtomatis(t); 
+            else if(tempStatusLama==='Piutang'&&t.status==='Lunas') hapusDariUtangOtomatis(t.id); 
+            else if(t.status==='Piutang') updateUtangOtomatis(t); 
+            
+            simpanData(); tutupEditTransaksi(); alert("Perubahan disimpan & dompet disesuaikan!");
+        } 
+    }
 
     // ================= TABEL TRANSAKSI =================
     function ubahFilterBeranda() { filterSaatIni = document.getElementById('filterWaktuBeranda').value; document.getElementById('wadahFilterCustom').style.display = filterSaatIni === 'custom' ? 'block' : 'none'; document.getElementById('checkSemuaTransaksi').checked = false; renderDaftarTransaksiBeranda(); }
@@ -1715,6 +1769,30 @@
         if(document.getElementById('mutasiKe')) document.getElementById('mutasiKe').innerHTML = opsiDompet;
         if(document.getElementById('utangDompetId')) document.getElementById('utangDompetId').innerHTML = opsiDompetUtang;
         if(document.getElementById('pengeluaranDompetId')) document.getElementById('pengeluaranDompetId').innerHTML = opsiDompetUtang;
+        
+        // UPDATE OPSI DOMPET DI KASIR & EDIT TRANSAKSI
+        if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('kasirDompetMasuk')) document.getElementById('kasirDompetMasuk').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetModal')) document.getElementById('editTransDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetMasuk')) document.getElementById('editTransDompetMasuk').innerHTML = opsiDompetUtang;
+        
+        // UPDATE OPSI DOMPET DI KASIR & EDIT TRANSAKSI
+        if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('kasirDompetMasuk')) document.getElementById('kasirDompetMasuk').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetModal')) document.getElementById('editTransDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetMasuk')) document.getElementById('editTransDompetMasuk').innerHTML = opsiDompetUtang;
+        
+        // UPDATE OPSI DOMPET DI KASIR & EDIT TRANSAKSI
+        if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('kasirDompetMasuk')) document.getElementById('kasirDompetMasuk').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetModal')) document.getElementById('editTransDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetMasuk')) document.getElementById('editTransDompetMasuk').innerHTML = opsiDompetUtang;
+        
+        // UPDATE OPSI DOMPET DI KASIR & EDIT TRANSAKSI
+        if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('kasirDompetMasuk')) document.getElementById('kasirDompetMasuk').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetModal')) document.getElementById('editTransDompetModal').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editTransDompetMasuk')) document.getElementById('editTransDompetMasuk').innerHTML = opsiDompetUtang;
         
         // UPDATE OPSI DOMPET DI KASIR & EDIT TRANSAKSI
         if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
