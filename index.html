@@ -204,6 +204,24 @@
         </div>
     </div>
 
+    <div id="modal-edit-kasbon" class="modal-popup">
+        <div class="popup-content">
+            <h4 style="margin-bottom: 10px;">✏️ Edit Info Kasbon</h4>
+            <form onsubmit="eksekusiSimpanInfoKasbon(event)">
+                <input type="hidden" id="editKasbonId">
+                <input type="hidden" id="editKasbonDompetLama">
+                <label class="text-small" style="text-align:left; display:block;">Nama Pelanggan / Pihak:</label>
+                <input type="text" id="editKasbonNama" required>
+                <label class="text-small" style="text-align:left; display:block;">Sumber/Tujuan Dompet Awal:</label>
+                <select id="editKasbonDompet" style="background:#e8f4fd; border-color:var(--primary); font-weight:bold;"></select>
+                <div class="grid-2" style="margin-top: 15px;">
+                    <button type="submit" class="btn-green">💾 Simpan Perubahan</button>
+                    <button type="button" class="btn-red" onclick="tutupModalEditKasbon()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-cicilan" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">💳 Catat Cicilan</h4>
@@ -455,6 +473,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-riwayat')"><span>📝</span>Riwayat Full</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
@@ -495,6 +514,33 @@
             <p class="text-small" style="margin-bottom: 5px;">Geser dan pilih warna sesuka hati:</p>
             <input type="color" id="inputWarnaTema" oninput="ubahTema(this.value, false)">
             <button type="button" class="btn-green" onclick="terapkanTemaBebas()" style="margin-top: 15px;">💾 Terapkan Warna</button>
+        </div>
+
+        <div id="sub-mutasi" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>📑 Mutasi Arus Kas</h4>
+            <p class="text-small" style="margin-bottom: 10px;">Lacak uang masuk & keluar secara detail.</p>
+            
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+                <div class="grid-2">
+                    <div><label class="text-small">Dari:</label><input type="date" id="mutasiTglMulai"></div>
+                    <div><label class="text-small">Sampai:</label><input type="date" id="mutasiTglAkhir"></div>
+                </div>
+                <button type="button" class="btn-blue" onclick="renderMutasiSaldo()" style="margin-top: 10px; margin-bottom: 0;">🔍 Cek Mutasi</button>
+            </div>
+
+            <div id="rekapMutasiRingkas" class="grid-2" style="margin-bottom: 15px; display: none;">
+                <div style="background: #e8f5e9; padding: 10px; border-radius: 8px; border: 1px solid #c8e6c9;">
+                    <div class="text-small">Total Masuk</div>
+                    <b class="text-green">Rp <span id="totalMutasiMasuk">0</span></b>
+                </div>
+                <div style="background: #ffebee; padding: 10px; border-radius: 8px; border: 1px solid #ffcdd2;">
+                    <div class="text-small">Total Keluar</div>
+                    <b class="text-red">Rp <span id="totalMutasiKeluar">0</span></b>
+                </div>
+            </div>
+
+            <div id="listMutasiSaldo"></div>
         </div>
 
         <div id="sub-kategori" class="card" style="display:none;">
@@ -813,7 +859,7 @@
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
@@ -830,6 +876,7 @@
         if(sub==='sub-kategori') { jd="Kategori Produk"; renderKategoriMasterList(); }
         if(sub==='sub-portal') { jd="Portal Dompet"; } 
         if(sub==='sub-grafik') { jd="Grafik Bisnis"; renderGrafik(); } 
+        if(sub==='sub-mutasi') { jd="Mutasi Saldo"; document.getElementById('mutasiTglMulai').value = ambilTanggal(); document.getElementById('mutasiTglAkhir').value = ambilTanggal(); renderMutasiSaldo(); }
         
         document.getElementById('judulHalaman').innerText = jd; 
     }
@@ -959,7 +1006,7 @@
             let r = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Pinjaman/Manual", nominal: n };
             
             if(ex) { ex.nominal = (Number(ex.nominal) || 0) + n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); } 
-            else { db.utang.push({ id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r] }); }
+            else { db.utang.push({ id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r], dompetId: dId }); }
             
             if(dId && dId !== 'none') {
                 let d = db.dompet.find(x => String(x.id) === String(dId));
@@ -1006,7 +1053,7 @@
                     </div>
                 </div>`).join('') : `<div class="text-small">${u.namaProduk}</div>`;
             
-            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:150px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
+            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:150px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-outline" style="width:auto; padding:8px 10px; margin:0; font-size:11px; flex:1;" onclick="bukaEditInfoKasbon('${u.id}')">✏️ Edit Info</button><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
         }).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Kosong / Semua lunas! 🎉</div>';
     }
 
@@ -1760,6 +1807,7 @@
         if(document.getElementById('mutasiDari')) document.getElementById('mutasiDari').innerHTML = opsiDompet;
         if(document.getElementById('mutasiKe')) document.getElementById('mutasiKe').innerHTML = opsiDompet;
         if(document.getElementById('utangDompetId')) document.getElementById('utangDompetId').innerHTML = opsiDompetUtang;
+        if(document.getElementById('editKasbonDompet')) document.getElementById('editKasbonDompet').innerHTML = opsiDompetUtang;
         if(document.getElementById('pengeluaranDompetId')) document.getElementById('pengeluaranDompetId').innerHTML = opsiDompetUtang;
         
         if(document.getElementById('kasirDompetModal')) document.getElementById('kasirDompetModal').innerHTML = opsiDompetUtang;
@@ -1867,7 +1915,133 @@
             }
         });
     }
+// ==========================================
+    // MESIN MUTASI ARUS KAS
+    // ==========================================
+    function renderMutasiSaldo() {
+        let tglMulai = document.getElementById('mutasiTglMulai').value;
+        let tglAkhir = document.getElementById('mutasiTglAkhir').value;
 
+        if (!tglMulai || !tglAkhir) return alert("Pilih tanggal dulu!");
+
+        let aliranDana = [];
+        let totalIn = 0;
+        let totalOut = 0;
+
+        // 1. Ambil dari Transaksi Jualan
+        db.transaksi.forEach(t => {
+            if (t.tanggal >= tglMulai && t.tanggal <= tglAkhir) {
+                if (t.modal > 0) {
+                    aliranDana.push({ tgl: t.tanggal, ket: "Beli Modal: " + t.namaProduk, tipe: 'OUT', nominal: t.modal });
+                    totalOut += t.modal;
+                }
+                if (t.status === 'Lunas') {
+                    aliranDana.push({ tgl: t.tanggal, ket: "Jualan Lunas: " + t.namaProduk, tipe: 'IN', nominal: t.total });
+                    totalIn += t.total;
+                }
+            }
+        });
+
+        // 2. Ambil dari Pengeluaran
+        db.pengeluaran.forEach(p => {
+            if (p.tanggal >= tglMulai && p.tanggal <= tglAkhir) {
+                aliranDana.push({ tgl: p.tanggal, ket: "Biaya: " + p.keterangan, tipe: 'OUT', nominal: p.nominal });
+                totalOut += p.nominal;
+            }
+        });
+
+        // 3. Ambil dari Cicilan Utang/Piutang
+        db.utang.forEach(u => {
+            if (u.cicilan) {
+                u.cicilan.forEach(c => {
+                    if (c.tanggal >= tglMulai && c.tanggal <= tglAkhir) {
+                        let tipeDana = u.jenis === 'Piutang' ? 'IN' : 'OUT';
+                        let ketDana = u.jenis === 'Piutang' ? "Terima Cicilan dr " + u.nama : "Bayar Utang ke " + u.nama;
+                        aliranDana.push({ tgl: c.tanggal, ket: ketDana, tipe: tipeDana, nominal: c.nominal });
+                        if (tipeDana === 'IN') totalIn += c.nominal; else totalOut += c.nominal;
+                    }
+                });
+            }
+        });
+
+        // Urutkan tanggal terbaru
+        aliranDana.sort((a, b) => new Date(b.tgl) - new Date(a.tgl));
+
+        // Render Angka
+        document.getElementById('rekapMutasiRingkas').style.display = 'grid';
+        document.getElementById('totalMutasiMasuk').innerText = formatRupiah(totalIn);
+        document.getElementById('totalMutasiKeluar').innerText = formatRupiah(totalOut);
+
+        // Render List HTML
+        document.getElementById('listMutasiSaldo').innerHTML = aliranDana.map(d => `
+            <div class="list-item" style="border-left: 4px solid ${d.tipe === 'IN' ? '#28a745' : '#dc3545'}; background: white; padding: 10px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="flex-between">
+                    <div>
+                        <span class="text-small">📅 ${formatTanggalIndo(d.tgl)}</span><br>
+                        <b>${d.ket}</b>
+                    </div>
+                    <div style="text-align: right;">
+                        <b class="${d.tipe === 'IN' ? 'text-green' : 'text-red'}">${d.tipe === 'IN' ? '+' : '-'} Rp ${formatRupiah(d.nominal)}</b>
+                    </div>
+                </div>
+            </div>
+        `).join('') || '<div class="text-center text-small" style="padding: 20px;">Tidak ada pergerakan uang di tanggal tersebut.</div>';
+    }
+// ==========================================
+    // MESIN EDIT INFO KASBON & REFUND DOMPET
+    // ==========================================
+    function bukaEditInfoKasbon(id) {
+        let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
+        document.getElementById('editKasbonId').value = id;
+        document.getElementById('editKasbonNama').value = u.nama;
+        
+        let dLama = u.dompetId || 'none';
+        document.getElementById('editKasbonDompetLama').value = dLama;
+        document.getElementById('editKasbonDompet').value = dLama;
+        
+        document.getElementById('modal-edit-kasbon').classList.add('active');
+    }
+
+    function tutupModalEditKasbon() { 
+        document.getElementById('modal-edit-kasbon').classList.remove('active'); 
+    }
+
+    function eksekusiSimpanInfoKasbon(e) {
+        e.preventDefault();
+        let id = document.getElementById('editKasbonId').value;
+        let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
+        
+        u.nama = document.getElementById('editKasbonNama').value.trim();
+        let dompetBaru = document.getElementById('editKasbonDompet').value;
+        let dompetLama = document.getElementById('editKasbonDompetLama').value;
+
+        // MESIN REFUND OTOMATIS JIKA DOMPET DIGANTI
+        if(dompetBaru !== dompetLama) {
+            // 1. Refund (Kembalikan) uang ke dompet lama
+            if(dompetLama !== 'none') {
+                let dLama = db.dompet.find(x => String(x.id) === String(dompetLama));
+                if(dLama) {
+                    if(u.jenis === 'Piutang') dLama.saldo += Number(u.nominal); // Uang masuk balik ke dompet
+                    else if(u.jenis === 'Utang') dLama.saldo -= Number(u.nominal); // Uang ditarik balik
+                }
+            }
+            
+            // 2. Potong ulang uang dari dompet baru
+            if(dompetBaru !== 'none') {
+                let dBaru = db.dompet.find(x => String(x.id) === String(dompetBaru));
+                if(dBaru) {
+                    if(u.jenis === 'Piutang') dBaru.saldo -= Number(u.nominal); // Uang keluar ke pelanggan
+                    else if(u.jenis === 'Utang') dBaru.saldo += Number(u.nominal); // Uang masuk dr pelanggan
+                }
+            }
+            // Simpan jejak dompet barunya
+            u.dompetId = dompetBaru;
+        }
+
+        simpanData();
+        tutupModalEditKasbon();
+        alert("Sip! Info Kasbon dan aliran dompet berhasil diperbarui.");
+    }
 </script>
 </body>
 </html>
