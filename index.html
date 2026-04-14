@@ -211,7 +211,8 @@
                 <input type="hidden" id="editKasbonId">
                 <input type="hidden" id="editKasbonDompetLama">
                 <label class="text-small" style="text-align:left; display:block;">Nama Pelanggan / Pihak:</label>
-                <input type="text" id="editKasbonNama" required>
+                <div class="search-select" onclick="bukaPencarian('pelanggan-edit-kasbon')"><span id="labelEditKasbonPelanggan"><b>Pilih Pelanggan</b></span></div>
+                <input type="hidden" id="editKasbonNama" required>
                 <label class="text-small" style="text-align:left; display:block;">Sumber/Tujuan Dompet Awal:</label>
                 <select id="editKasbonDompet" style="background:#e8f4fd; border-color:var(--primary); font-weight:bold;"></select>
                 <div class="grid-2" style="margin-top: 15px;">
