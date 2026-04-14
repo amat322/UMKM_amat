@@ -1061,12 +1061,19 @@
     function bukaEditRincian(idUtang, idx) {
         let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
         let r = u.rincianBarang[idx]; if(!r) return;
-        document.getElementById('editRincianUtangId').value = idUtang;
-        document.getElementById('editRincianIdx').value = idx;
-        document.getElementById('editRincianTgl').value = r.tanggal;
-        document.getElementById('editRincianProduk').value = r.produk;
-        document.getElementById('editRincianNominal').value = formatRupiah(r.nominal);
-        document.getElementById('modal-edit-rincian').classList.add('active');
+        
+        if (r.transId) {
+            // OTAK PINTAR: Kalau ini jualan dari Kasir, Buka Pop-up Kasir Komplit!
+            bukaEditTransaksi(r.transId);
+        } else {
+            // Kalau ini pinjaman uang manual, buka Pop-up Rincian biasa
+            document.getElementById('editRincianUtangId').value = idUtang;
+            document.getElementById('editRincianIdx').value = idx;
+            document.getElementById('editRincianTgl').value = r.tanggal;
+            document.getElementById('editRincianProduk').value = r.produk;
+            document.getElementById('editRincianNominal').value = formatRupiah(r.nominal);
+            document.getElementById('modal-edit-rincian').classList.add('active');
+        }
     }
     function tutupModalRincian() { document.getElementById('modal-edit-rincian').classList.remove('active'); }
     
@@ -1486,7 +1493,16 @@
         document.getElementById('listHasilPencarian').innerHTML = html;
     }
     function pilihProduk(i, nama, m, h) { document.getElementById('kasirNamaProduk').value = nama; document.getElementById('kasirHargaModal').value = formatRupiah(m); document.getElementById('kasirHargaJual').value = formatRupiah(h); tutupPencarian(); }
-    function pilihPelanggan(i, nama) { let idKasir = modePencarian === 'pelanggan-kasir'; document.getElementById(idKasir ? 'kasirPelangganId' : 'utangPelangganId').value = i; document.getElementById(idKasir ? 'labelKasirPelanggan' : 'labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; tutupPencarian(); }
+    function pilihPelanggan(i, nama) { 
+        if (modePencarian === 'pelanggan-kasir') {
+            document.getElementById('kasirPelangganId').value = i; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-utang') {
+            document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-edit-kasbon') {
+            document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
+        }
+        tutupPencarian(); 
+    }
 
     function tambahUtangOtomatis(t) { let existing = db.utang.find(u => u.nama === t.pembeli && u.jenis === 'Piutang' && u.status !== 'Lunas'); let rincian = { transId: t.id, tanggal: t.tanggal, hari: getNamaHari(t.tanggal), produk: t.namaProduk, nominal: t.total }; if(existing) { existing.nominal += t.total; if(!existing.rincianBarang) existing.rincianBarang=[]; existing.rincianBarang.push(rincian); } else db.utang.push({ id: Date.now(), transId: null, jenis: 'Piutang', nama: t.pembeli, namaProduk: "Multiple", nominal: t.total, status: 'Belum Lunas', cicilan: [], rincianBarang: [rincian] }); }
     function hapusDariUtangOtomatis(transId) { db.utang.forEach(u => { if(u.rincianBarang) { let idx = u.rincianBarang.findIndex(r => String(r.transId) === String(transId)); if(idx > -1) { u.nominal -= u.rincianBarang[idx].nominal; u.rincianBarang.splice(idx, 1); } } }); db.utang = db.utang.filter(u => (u.rincianBarang && u.rincianBarang.length > 0) || u.nominal > 0); }
@@ -1995,6 +2011,7 @@
         let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
         document.getElementById('editKasbonId').value = id;
         document.getElementById('editKasbonNama').value = u.nama;
+        if(document.getElementById('labelEditKasbonPelanggan')) document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${u.nama}</b>`;
         
         let dLama = u.dompetId || 'none';
         document.getElementById('editKasbonDompetLama').value = dLama;
