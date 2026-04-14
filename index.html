@@ -106,7 +106,11 @@
         /* Desain Struk */
         .struk-kertas { background: #fff; color: #000; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; text-align: left; width: 100%; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
-    </style>
+    /* Desain Kertas Struk Thermal */
+        .kertas-struk { background: white; color: black; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; width: 100%; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); margin-top: 20px; box-sizing: border-box; }
+        .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .kotak-token { border: 1.5px dashed #000; padding: 8px; margin: 10px 0; text-align: center; font-weight: bold; font-size: 14px; background: #fafafa; }
+</style>
 </head>
 <body>
 
@@ -475,6 +479,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-backup')"><span>💾</span>Data Excel</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
@@ -515,6 +520,48 @@
             <p class="text-small" style="margin-bottom: 5px;">Geser dan pilih warna sesuka hati:</p>
             <input type="color" id="inputWarnaTema" oninput="ubahTema(this.value, false)">
             <button type="button" class="btn-green" onclick="terapkanTemaBebas()" style="margin-top: 15px;">💾 Terapkan Warna</button>
+        </div>
+
+        <div id="sub-struk-manual" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4 style="margin-bottom: 15px;">🧾 Bikin Struk Manual</h4>
+            <input type="text" id="strukManualNamaToko" value="AMAT BAJUALAN" oninput="updatePreviewStruk()" placeholder="Nama Toko" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <input type="date" id="strukManualTanggal" onchange="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <input type="text" id="strukManualPelanggan" placeholder="Nama Pelanggan (Opsional)" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <hr style="margin: 15px 0;">
+            <b class="text-small">Daftar Tagihan / Barang:</b>
+            <div id="wadahBarangManual">
+                <div class="grid-3 item-barang-manual" style="gap:5px; margin-bottom:10px;">
+                    <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                </div>
+            </div>
+            <button type="button" class="btn-outline" style="background:transparent; color:#007bff; border:1px solid #007bff; width:100%; padding:10px; border-radius:8px; margin-bottom:10px;" onclick="tambahBarisBarang()">➕ Tambah Baris</button>
+            <div style="background:#eef2f5; padding:10px; border-radius:8px; margin-bottom:10px;">
+                <div class="flex-between">
+                    <b class="text-small">Biaya Admin (Rp):</b>
+                    <input type="number" id="strukManualAdmin" placeholder="0" oninput="updatePreviewStruk()" style="width:50%; margin-bottom:0; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                </div>
+            </div>
+            <b class="text-small">Catatan / Token (Opsional):</b>
+            <textarea id="strukManualCatatan" rows="3" placeholder="Contoh:\nTOKEN PLN:\n1234 5678 9012 3456" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;"></textarea>
+
+            <div id="areaStrukManual" class="kertas-struk">
+                <div class="text-center"><b id="prevNamaToko" style="font-size:16px;">AMAT BAJUALAN</b></div>
+                <div class="text-center" style="font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
+                <div class="struk-divider"></div>
+                <div>Tgl: <span id="prevTanggal">...</span><span id="wadahPelanggan"></span></div>
+                <div class="struk-divider"></div>
+                <div id="prevDaftarBarang"><div>- x0<br><div class="text-right">Rp 0</div></div></div>
+                <div id="areaPrevAdmin" style="display:none;"><div class="struk-divider"></div><div class="flex-between"><span>Biaya Admin</span><span id="prevAdminText">Rp 0</span></div></div>
+                <div class="struk-divider"></div>
+                <div class="flex-between"><b style="font-size:15px;">TOTAL</b><b id="prevTotal" style="font-size:15px;">Rp 0</b></div>
+                <div id="areaPrevCatatan" style="display:none;"><div class="struk-divider"></div><div class="kotak-token" id="prevCatatanText"></div></div>
+                <div class="struk-divider"></div>
+                <div class="text-center" style="font-size:10px;">Powered by Sistem UMKM Pro<br><b>by Gemini & Developer Amat Bajualan 🚀</b></div>
+            </div>
+            <button type="button" class="btn-green" style="margin-top:15px; width:100%; padding:12px; border-radius:8px; font-size:15px;" onclick="downloadStrukManual()">⬇️ Download Struk (JPG)</button>
         </div>
 
         <div id="sub-mutasi" class="card" style="display:none;">
@@ -860,7 +907,7 @@
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
@@ -878,6 +925,7 @@
         if(sub==='sub-portal') { jd="Portal Dompet"; } 
         if(sub==='sub-grafik') { jd="Grafik Bisnis"; renderGrafik(); } 
         if(sub==='sub-mutasi') { jd="Mutasi Saldo"; document.getElementById('mutasiTglMulai').value = ambilTanggal(); document.getElementById('mutasiTglAkhir').value = ambilTanggal(); renderMutasiSaldo(); }
+        if(sub==='sub-struk-manual') { jd="Struk Manual"; document.getElementById('strukManualTanggal').value = ambilTanggal(); updatePreviewStruk(); }
         
         document.getElementById('judulHalaman').innerText = jd; 
     }
@@ -2078,6 +2126,61 @@
             // Kalau utang/piutang pinjaman uang manual biasa
             bukaEditInfoKasbon(id);
         }
+    }
+// ==========================================
+    // MESIN STRUK MANUAL
+    // ==========================================
+    function tambahBarisBarang() {
+        let wadah = document.getElementById('wadahBarangManual');
+        let div = document.createElement('div');
+        div.className = 'grid-3 item-barang-manual';
+        div.style.gap = '5px'; div.style.marginBottom = '10px';
+        div.innerHTML = `
+            <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+        `;
+        wadah.appendChild(div);
+    }
+
+    function updatePreviewStruk() {
+        if(!document.getElementById('strukManualNamaToko')) return; // Jaga-jaga biar gak error
+        document.getElementById('prevNamaToko').innerText = document.getElementById('strukManualNamaToko').value || "NAMA TOKO";
+        document.getElementById('prevTanggal').innerText = document.getElementById('strukManualTanggal').value;
+        let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
+        document.getElementById('wadahPelanggan').innerHTML = namaPlg !== "" ? "<br>Plg: " + namaPlg : ""; 
+
+        let htmlBarang = ""; let subTotalBarang = 0;
+        document.querySelectorAll('.item-barang-manual').forEach(baris => {
+            let nama = baris.querySelector('.input-nama-barang').value || "-";
+            let qty = parseInt(baris.querySelector('.input-qty-barang').value) || 0;
+            let harga = parseInt(baris.querySelector('.input-harga-barang').value) || 0;
+            let subtotal = qty * harga; subTotalBarang += subtotal;
+            if (nama !== "-" || harga > 0) {
+                htmlBarang += `<div style="margin-bottom: 5px;">${nama} x${qty}<div class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</div></div>`;
+            }
+        });
+        document.getElementById('prevDaftarBarang').innerHTML = htmlBarang || "<div>- x0<br><div class='text-right'>Rp 0</div></div>";
+
+        let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
+        let areaAdmin = document.getElementById('areaPrevAdmin');
+        if (adminFee > 0) { areaAdmin.style.display = "block"; document.getElementById('prevAdminText').innerText = "Rp " + adminFee.toLocaleString('id-ID'); } else { areaAdmin.style.display = "none"; }
+
+        document.getElementById('prevTotal').innerText = "Rp " + (subTotalBarang + adminFee).toLocaleString('id-ID');
+
+        let catatan = document.getElementById('strukManualCatatan').value;
+        let areaCatatan = document.getElementById('areaPrevCatatan');
+        if (catatan.trim() !== "") { areaCatatan.style.display = "block"; document.getElementById('prevCatatanText').innerHTML = catatan.replace(/\n/g, '<br>'); } else { areaCatatan.style.display = "none"; }
+    }
+
+    function downloadStrukManual() {
+        let area = document.getElementById('areaStrukManual');
+        html2canvas(area).then(canvas => { 
+            let link = document.createElement('a'); 
+            link.download = `Struk-${Date.now()}.png`; 
+            link.href = canvas.toDataURL("image/png"); 
+            link.click(); 
+        });
     }
 </script>
 </body>
