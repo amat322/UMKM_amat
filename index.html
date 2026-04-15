@@ -249,18 +249,19 @@
     <div id="modal-struk" class="modal-popup">
         <div class="popup-content" style="background:#f4f4f4;">
             <div id="area-struk" class="struk-kertas">
-                <div style="text-align:center; font-weight:bold; font-size:16px;">STRUK TRANSAKSI</div>
-                <div style="text-align:center; font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
+                <div id="struk-nama-toko" style="text-align:center; font-size:16px; margin-bottom: 3px;">NAMA TOKO</div>
+                <div id="struk-info-toko" style="text-align:center; font-size:11px; margin-bottom:10px; white-space: pre-wrap;">Info Toko</div>
                 <div class="struk-divider"></div>
                 <div id="struk-info">Tgl: ...<br>Plg: ...</div>
                 <div class="struk-divider"></div>
                 <div id="struk-item">Nama Produk x1<br><div style="text-align:right">Rp 0</div></div>
                 <div class="struk-divider"></div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
                     <span>TOTAL</span><span id="struk-total">Rp 0</span>
                 </div>
                 <div class="struk-divider"></div>
-                <div style="text-align:center; font-size:10px;">Powered by Sistem UMKM Pro</div>
+                <div id="struk-pesan-penutup" style="text-align:center; font-size:11px; white-space: pre-wrap; margin-bottom: 5px;">Pesan Penutup</div>
+                <div style="text-align:center; font-size:9px; color: #888;">Powered by Sistem UMKM Pro</div>
             </div>
             <button type="button" class="btn-green" onclick="downloadStruk()">💾 Download Struk Gambar</button>
             <button type="button" class="btn-red" onclick="document.getElementById('modal-struk').classList.remove('active')">Tutup</button>
@@ -480,6 +481,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
@@ -688,6 +690,41 @@
             <label class="text-small text-red"><b>2. Tagihan Utang</b></label><textarea id="tplTagihan" rows="5"></textarea>
             <label class="text-small text-green"><b>3. Laporan Transaksi</b></label><textarea id="tplBos" rows="3"></textarea>
             <div class="grid-2"><button type="button" class="btn-green" onclick="simpanTemplateWA()">💾 Simpan</button><button type="button" class="btn-outline" style="border-color:#dc3545; color:#dc3545;" onclick="resetTemplateWA()">🔄 Reset</button></div>
+        </div>
+
+        <div id="sub-struk-cetak" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>🖨️ Pengaturan Struk Cetak</h4>
+            <p class="text-small" style="margin-bottom: 15px;">Desain nota gambar sesuai gaya tokomu.</p>
+            
+            <label class="text-small text-blue"><b>Nama Toko:</b></label>
+            <input type="text" id="setStrukNama" placeholder="Contoh: AMAT BAJUALAN">
+            
+            <div class="grid-2">
+                <div>
+                    <label class="text-small">Gaya Huruf Toko:</label>
+                    <select id="setStrukGaya" style="margin-bottom: 10px; font-weight:bold;">
+                        <option value="bold">Tebal (Bold)</option>
+                        <option value="normal">Biasa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-small">Ukuran Teks:</label>
+                    <select id="setStrukUkuran" style="margin-bottom: 10px; font-weight:bold;">
+                        <option value="11px">Kecil</option>
+                        <option value="13px">Sedang</option>
+                        <option value="16px">Besar</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="text-small">Alamat / Info Kontak:</label>
+            <textarea id="setStrukInfo" rows="2" placeholder="Cth: Jl. Merdeka | WA: 0812..."></textarea>
+            
+            <label class="text-small">Pesan Penutup (Bawah):</label>
+            <textarea id="setStrukPesan" rows="2" placeholder="Cth: Terima kasih sudah belanja!"></textarea>
+            
+            <button type="button" class="btn-green" onclick="simpanPengaturanStruk()">💾 Simpan Desain Struk</button>
         </div>
 
         <div id="sub-alokasi" class="card" style="display:none;">
@@ -907,7 +944,7 @@
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
@@ -925,6 +962,15 @@
         if(sub==='sub-portal') { jd="Portal Dompet"; } 
         if(sub==='sub-grafik') { jd="Grafik Bisnis"; renderGrafik(); } 
         if(sub==='sub-mutasi') { jd="Mutasi Saldo"; document.getElementById('mutasiTglMulai').value = ambilTanggal(); document.getElementById('mutasiTglAkhir').value = ambilTanggal(); renderMutasiSaldo(); }
+        if(sub==='sub-struk-cetak') { 
+            jd="Desain Struk"; 
+            if(!db.strukCetak) db.strukCetak = { namaToko: "AMAT SOSMED", infoToko: "Melayani sepenuh hati", pesanPenutup: "Terima Kasih Sudah Belanja!", ukuranFont: "13px", gayaToko: "bold" };
+            document.getElementById('setStrukNama').value = db.strukCetak.namaToko;
+            document.getElementById('setStrukGaya').value = db.strukCetak.gayaToko;
+            document.getElementById('setStrukInfo').value = db.strukCetak.infoToko;
+            document.getElementById('setStrukPesan').value = db.strukCetak.pesanPenutup;
+            document.getElementById('setStrukUkuran').value = db.strukCetak.ukuranFont;
+        }
         if(sub==='sub-struk-manual') { jd="Struk Manual"; document.getElementById('strukManualTanggal').value = ambilTanggal(); updatePreviewStruk(); }
         
         document.getElementById('judulHalaman').innerText = jd; 
@@ -1321,10 +1367,38 @@
 
     function bukaStruk(id) {
         let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return;
+        
+        if(!db.strukCetak) db.strukCetak = { namaToko: "AMAT SOSMED", infoToko: "Sistem UMKM Pro", pesanPenutup: "Terima Kasih", ukuranFont: "13px", gayaToko: "bold" };
+        let set = db.strukCetak;
+        
+        let area = document.getElementById('area-struk');
+        area.style.fontSize = set.ukuranFont; 
+        
+        let elToko = document.getElementById('struk-nama-toko');
+        elToko.innerText = set.namaToko;
+        elToko.style.fontWeight = set.gayaToko === 'bold' ? 'bold' : 'normal';
+        elToko.style.fontSize = (parseInt(set.ukuranFont) + 6) + 'px'; 
+        
+        document.getElementById('struk-info-toko').innerText = set.infoToko;
+        document.getElementById('struk-pesan-penutup').innerText = set.pesanPenutup;
+
         document.getElementById('struk-info').innerHTML = `Tgl: ${formatTanggalIndo(t.tanggal)}<br>Plg: ${t.pembeli}`;
-        document.getElementById('struk-item').innerHTML = `${t.namaProduk} x${t.jumlah}<br><div style="text-align:right; font-weight:bold; font-size:14px;">Rp ${formatRupiah(t.total)}</div>`;
+        document.getElementById('struk-item').innerHTML = `${t.namaProduk} x${t.jumlah}<br><div style="text-align:right; font-weight:bold; font-size:${parseInt(set.ukuranFont) + 2}px;">Rp ${formatRupiah(t.total)}</div>`;
         document.getElementById('struk-total').innerText = `Rp ${formatRupiah(t.total)}`;
+        document.getElementById('struk-total').style.fontSize = (parseInt(set.ukuranFont) + 4) + 'px';
+        
         document.getElementById('modal-struk').classList.add('active');
+    }
+
+    function simpanPengaturanStruk() {
+        if(!db.strukCetak) db.strukCetak = {};
+        db.strukCetak.namaToko = document.getElementById('setStrukNama').value.trim();
+        db.strukCetak.gayaToko = document.getElementById('setStrukGaya').value;
+        db.strukCetak.infoToko = document.getElementById('setStrukInfo').value.trim();
+        db.strukCetak.pesanPenutup = document.getElementById('setStrukPesan').value.trim();
+        db.strukCetak.ukuranFont = document.getElementById('setStrukUkuran').value;
+        simpanData();
+        alert("Sip! Desain struk berhasil di-update!");
     }
     function downloadStruk() {
         let area = document.getElementById('area-struk');
