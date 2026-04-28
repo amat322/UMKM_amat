@@ -1565,8 +1565,44 @@
     function kembaliKeDompetUtama() { document.getElementById('sub-dompet-detail').style.display = 'none'; document.getElementById('sub-dompet').style.display = 'block'; idDompetAktif = null; }
     function renderPecahanDompet() {
         let d = db.dompet.find(x => String(x.id) === String(idDompetAktif));
-        document.getElementById('daftar-pecahan-dinamis').innerHTML = d.pecahan.map((p, idx) => `<div class="pecahan-item"><div style="flex:1;"><span style="font-size:14px; font-weight:bold; color: #333;">${p.nama}</span></div><div><div style="display:flex; align-items:center;"><span style="font-size:13px; margin-right:5px; color:#666;">Total Rp</span><input type="text" inputmode="numeric" pattern="[0-9]*" value="${p.nilai === 0 ? '' : formatRupiah(p.nilai)}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)"></div><div class="text-bantuan" id="bantuan-pecahan-${idx}">Terbaca: Rp ${formatRupiah(p.nilai)}</div></div><button type="button" class="btn-red" style="width:32px; padding:6px; margin-left:10px; font-size:12px; border-radius:4px;" onclick="hapusBarisPecahan(${idx})">X</button></div>`).join(''); hitungOtomatisPecahan();
+        document.getElementById('daftar-pecahan-dinamis').innerHTML = d.pecahan.map((p, idx) => `
+        <div style="display:flex; align-items:center; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
+            <div style="flex:1;">
+                <span style="font-size:13px; font-weight:bold; color: #333; display:block; margin-bottom:5px;">${p.nama}</span>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:12px; color:#666; font-weight:bold;">Rp</span>
+                    <input type="text" id="input-pecahan-${idx}" inputmode="numeric" value="${p.nilai === 0 ? '' : formatRupiah(p.nilai)}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)" style="margin-bottom:0; padding:8px; width:100px;">
+                    
+                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; background:#fff;" onclick="tambahNolTigaPecahan(${idx})"><b>000</b></button>
+                    
+                    <button type="button" class="btn-warning" style="width:auto; padding:8px; margin:0; font-size:13px; border:none; background:#ffc107;" onclick="resetNilaiPecahan(${idx})">🧹</button>
+                </div>
+                <div class="text-bantuan" id="bantuan-pecahan-${idx}" style="font-size:10px; color:#888; margin-top:3px;">Terbaca: Rp ${formatRupiah(p.nilai)}</div>
+            </div>
+            <button type="button" class="btn-red" style="width:auto; padding:10px 12px; margin-left:5px; font-size:12px; border-radius:6px;" onclick="hapusBarisPecahan(${idx})">X</button>
+        </div>`).join(''); 
+        hitungOtomatisPecahan();
     }
+// ... (ini kode renderPecahanDompet yang baru kamu timpa di Tahap 1) ...
+    
+    function tambahNolTigaPecahan(idx) {
+        let inputEl = document.getElementById('input-pecahan-' + idx);
+        if(!inputEl) return;
+        let val = getAngkaMurni(inputEl.value);
+        if(val === 0) return; 
+        
+        let newVal = val * 1000;
+        inputEl.value = formatRupiah(newVal);
+        updateNilaiPecahan(idx, inputEl.value);
+    }
+
+    function resetNilaiPecahan(idx) {
+        let inputEl = document.getElementById('input-pecahan-' + idx);
+        if(!inputEl) return;
+        inputEl.value = '';
+        updateNilaiPecahan(idx, '');
+    }
+
     function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
     function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.splice(idx, 1); renderPecahanDompet(); } }
     function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); }
