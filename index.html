@@ -155,7 +155,9 @@
         <div class="modal-body">
             <input type="hidden" id="editTransId">
             <label class="text-small">Tanggal:</label><input type="date" id="editTransTgl">
-            <label class="text-small">Nama Pelanggan:</label><input type="text" id="editTransPelanggan" placeholder="Nama Pelanggan">
+            <label class="text-small">Nama Pelanggan:</label>
+            <div class="search-select" onclick="bukaPencarian('pelanggan-edit-trans')"><span id="labelEditTransPelanggan"><b>Pilih Pelanggan</b></span></div>
+            <input type="hidden" id="editTransPelangganNama" value="">
             <label class="text-small">Nama Produk:</label><input type="text" id="editTransProduk" placeholder="Nama Produk">
             <div class="grid-2">
                 <div><label class="text-small">Harga Modal (Rp):</label><input type="text" inputmode="numeric" id="editTransModal" oninput="formatInputRupiah(event)"></div>
@@ -1622,6 +1624,8 @@
             document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-kasbon') {
             document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-edit-trans') {
+            document.getElementById('editTransPelangganNama').value = nama; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${nama}</b>`; 
         }
         tutupPencarian(); 
     }
@@ -1636,7 +1640,7 @@
             if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
             
             t.tanggal = document.getElementById('editTransTgl').value; 
-            t.pembeli = document.getElementById('editTransPelanggan').value || 'Umum'; 
+            t.pembeli = document.getElementById('editTransPelangganNama').value || 'Umum'; 
             t.namaProduk = document.getElementById('editTransProduk').value; 
             t.modal = getAngkaMurni(document.getElementById('editTransModal').value); 
             t.total = getAngkaMurni(document.getElementById('editTransTotal').value); 
@@ -1665,7 +1669,7 @@
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
 
     let tempStatusLama = "";
-    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelanggan').value = t.pembeli || 'Umum'; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; document.getElementById('modal-edit-transaksi').classList.add('active'); }
+    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; document.getElementById('modal-edit-transaksi').classList.add('active'); }
     function tutupEditTransaksi() { document.getElementById('modal-edit-transaksi').classList.remove('active'); }
 
     function renderDaftarTransaksiBeranda() {
