@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1264,6 +1265,7 @@
         document.getElementById('cicilanSisaTampil').innerText = "Catat Baru (Sisa Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = ambilTanggal(); 
         document.getElementById('cicilanNominal').value = "";
+        if(document.getElementById('cicilanDompetMasuk')) document.getElementById('cicilanDompetMasuk').value = u.dompetId || 'none';
         document.getElementById('modal-cicilan').classList.add('active');
     }
 
@@ -1278,6 +1280,7 @@
         document.getElementById('cicilanSisaTampil').innerText = "Edit (Max Rp " + formatRupiah(s) + ")";
         document.getElementById('cicilanTgl').value = c.tanggal; 
         document.getElementById('cicilanNominal').value = formatRupiah(c.nominal);
+        if(document.getElementById('cicilanDompetMasuk')) document.getElementById('cicilanDompetMasuk').value = u.dompetId || 'none';
         document.getElementById('modal-cicilan').classList.add('active');
     }
 
