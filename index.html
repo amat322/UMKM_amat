@@ -244,6 +244,10 @@
                 <input type="date" id="cicilanTgl" required style="border-color: var(--primary);">
                 <label class="text-small" style="text-align:left; display:block;">Nominal Bayar (Rp):</label>
                 <input type="text" inputmode="numeric" id="cicilanNominal" placeholder="0" oninput="formatInputRupiah(event)" required>
+                
+                <label class="text-small text-green" style="font-weight:bold; display:block; margin-top:10px;">📥 Uang Masuk / Keluar Dompet:</label>
+                <select id="cicilanDompetMasuk" style="background:#e8f5e9; border-color:#28a745; font-weight:bold; margin-bottom: 0;"></select>
+
                 <div class="grid-2" style="margin-top: 15px;">
                     <button type="submit" class="btn-green">Simpan</button>
                     <button type="button" class="btn-red" onclick="tutupModalCicilan()">Batal</button>
@@ -1295,12 +1299,17 @@
             
             let nom = getAngkaMurni(document.getElementById('cicilanNominal').value); 
             let tgl = document.getElementById('cicilanTgl').value;
+            let dMasuk = document.getElementById('cicilanDompetMasuk').value;
+            
             if(nom <= 0 || !tgl) return alert("Isi tanggal dan nominal dengan benar!");
 
             if(!u.cicilan) u.cicilan=[]; 
             
+            // Logika Uang Masuk ke Dompet
+            let selisihNominal = nom;
             if(idEdit !== "") {
                 let idx = parseInt(idEdit);
+                selisihNominal = nom - Number(u.cicilan[idx].nominal); // Cari selisih kalau diedit
                 u.cicilan[idx].nominal = nom; 
                 u.cicilan[idx].tanggal = tgl; 
                 u.cicilan[idx].hari = getNamaHari(tgl);
@@ -1308,11 +1317,20 @@
                 u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom }); 
             }
             
+            // Eksekusi Pindah Saldo
+            if(dMasuk !== 'none') {
+                let dk = db.dompet.find(x => String(x.id) === String(dMasuk));
+                if(dk) {
+                    if(u.jenis === 'Piutang') dk.saldo += selisihNominal; // Orang bayar utang -> Uang Masuk
+                    else if(u.jenis === 'Utang') dk.saldo -= selisihNominal; // Kita bayar utang -> Uang Keluar
+                }
+            }
+            
             let tD = u.cicilan.reduce((a,c) => a + (Number(c.nominal) || 0), 0);
             if(tD >= (Number(u.nominal) || 0)) { 
-                selesaikanUtang(u); alert("Lunas & Masuk Riwayat!"); 
+                selesaikanUtang(u); alert("Lunas & Masuk Riwayat!\nSaldo dompet telah disesuaikan."); 
             } else { 
-                alert(idEdit !== "" ? "Cicilan berhasil diubah!" : "Cicilan berhasil dicatat!"); 
+                alert((idEdit !== "" ? "Cicilan diubah!" : "Cicilan dicatat!") + "\nSaldo dompet telah disesuaikan."); 
             } 
             simpanData(); tutupModalCicilan();
         } catch(err) { alert("Error: " + err.message); }
@@ -2060,6 +2078,7 @@
         if(document.getElementById('kasirDompetMasuk')) document.getElementById('kasirDompetMasuk').innerHTML = opsiDompetUtang;
         if(document.getElementById('editTransDompetModal')) document.getElementById('editTransDompetModal').innerHTML = opsiDompetUtang;
         if(document.getElementById('editTransDompetMasuk')) document.getElementById('editTransDompetMasuk').innerHTML = opsiDompetUtang;
+        if(document.getElementById('cicilanDompetMasuk')) document.getElementById('cicilanDompetMasuk').innerHTML = opsiDompetUtang;
         if(document.getElementById('produkDompetModal')) document.getElementById('produkDompetModal').innerHTML = opsiDompetUtang;
         if(document.getElementById('produkDompetMasuk')) document.getElementById('produkDompetMasuk').innerHTML = opsiDompetUtang;
         
