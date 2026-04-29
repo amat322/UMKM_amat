@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1238,15 +1237,25 @@
     }
     
     function lunasSekaligus(id) { 
-        if(confirm("Lunas & Masuk Riwayat?")) { 
+        if(confirm("Lunas Full & Masuk Riwayat? Uang akan masuk ke dompet otomatis.")) { 
             let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return; 
             let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
             let s = (Number(u.nominal) || 0) - tD; 
+            
             if(s > 0) { 
                 if(!u.cicilan) u.cicilan=[]; 
                 u.cicilan.push({id:Date.now(), tanggal:ambilTanggal(), hari:getNamaHari(ambilTanggal()), nominal:s}); 
+                
+                // MESIN PEMINDAH UANG OTOMATIS
+                if(u.dompetId && u.dompetId !== 'none') {
+                    let dk = db.dompet.find(x => String(x.id) === String(u.dompetId));
+                    if(dk) {
+                        if(u.jenis === 'Piutang') dk.saldo += s; // Uang masuk dr pelanggan
+                        else if(u.jenis === 'Utang') dk.saldo -= s; // Kita bayar utang
+                    }
+                }
             } 
-            selesaikanUtang(u); simpanData(); alert("Beres!"); 
+            selesaikanUtang(u); simpanData(); alert("Beres! Saldo dompet telah disesuaikan otomatis."); 
         } 
     }
     
