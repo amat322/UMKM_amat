@@ -826,9 +826,10 @@
                 </div>
             </div>
             
-            <div class="grid-2">
+            <div class="grid-3">
                 <button type="button" class="btn-outline" style="font-size:11px; padding:8px;" onclick="salinDataExcel('produk')">📦 Produk</button>
                 <button type="button" class="btn-outline" style="font-size:11px; padding:8px;" onclick="salinDataExcel('pelanggan')">👥 Pelanggan</button>
+                <button type="button" class="btn-outline" style="font-size:11px; padding:8px; border-color:#17a2b8; color:#17a2b8;" onclick="salinDataExcel('dompet')">👛 Dompet</button>
             </div>
             
             <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
@@ -846,9 +847,10 @@
                 </div>
             </div>
 
-            <div class="grid-2">
-                <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('produk')">Masukin Produk</button>
-                <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('pelanggan')">Masukin Pelanggan</button>
+            <div class="grid-3">
+                <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('produk')">Produk 📦</button>
+                <button type="button" class="btn-green" style="font-size:11px; padding:8px;" onclick="imporDataExcel('pelanggan')">Kontak 👥</button>
+                <button type="button" class="btn-blue" style="font-size:11px; padding:8px;" onclick="imporDataExcel('dompet')">Dompet 👛</button>
             </div>
         </div>
     </div>
@@ -1897,7 +1899,10 @@
             text = "Nama Produk\tKategori\tHarga Modal\tHarga Jual\n"; 
             db.produk.forEach(p => { 
                 let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
-                text += `${n}\t${p.kategoriId||'umum'}\t${p.modal||0}\t${p.harga||0}\n`; 
+                // Cari nama folder aslinya biar nggak hantu
+                let katObj = db.kategoriProduk.find(k => k.id === p.kategoriId);
+                let namaKat = katObj ? katObj.nama : 'Umum';
+                text += `${n}\t${namaKat}\t${p.modal||0}\t${p.harga||0}\n`; 
             }); 
         } else if (jenis === 'pelanggan') { 
             text = "Nama Pelanggan\tData Kontak Pintar\n"; 
@@ -1905,6 +1910,12 @@
                 let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
                 let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(', '); 
                 text += `${n}\t${infoStr}\n`; 
+            }); 
+        } else if (jenis === 'dompet') { 
+            text = "Nama Dompet\tKategori\tSaldo\n"; 
+            db.dompet.forEach(d => { 
+                let n = (d.nama||'').toString().replace(/\t|\n/g,' '); 
+                text += `${n}\t${d.kategori||'Kas Fisik'}\t${d.saldo||0}\n`; 
             }); 
         } 
         salinTeks(text, "Disalin! Silakan Paste (Tempel) di Excel."); 
@@ -1933,9 +1944,22 @@
                     sukses++; 
                 } 
             } else if(jenis === 'produk') { 
-                let nama = col[0], kat = col[1], m = getAngkaMurni(col[2]), j = getAngkaMurni(col[3]); 
+                let nama = col[0], katName = col[1], m = getAngkaMurni(col[2]), j = getAngkaMurni(col[3]); 
                 if(nama !== 'Nama Produk' && nama.trim() !== '') { 
-                    db.produk.push({ id: Date.now()+Math.random(), nama, kategoriId: kat||'umum', modal: m, harga: j, jenis: 'Digital' }); sukses++; 
+                    // OTOMATIS CARI / BIKIN FOLDER BIAR GAK JADI HANTU
+                    let finalKatId = 'umum';
+                    if(katName && katName.trim() !== '' && katName.toLowerCase() !== 'umum') {
+                        let cariKat = db.kategoriProduk.find(k => k.nama.toLowerCase() === katName.trim().toLowerCase());
+                        if(cariKat) {
+                            finalKatId = cariKat.id; // Kalau udah ada, masukin ke situ
+                        } else {
+                            // Kalau foldernya belum ada, sistem otomatis buatin!
+                            finalKatId = 'kat_' + Date.now() + Math.floor(Math.random() * 1000);
+                            db.kategoriProduk.push({ id: finalKatId, nama: katName.trim() });
+                            renderKategoriSelect();
+                        }
+                    }
+                    db.produk.push({ id: Date.now()+Math.random(), nama, kategoriId: finalKatId, modal: m, harga: j, dompetModal: 'none', dompetMasuk: 'none', jenis: 'Digital' }); sukses++; 
                 } 
             } else if(jenis === 'pelanggan') { 
                 let nama = col[0], infoStr = col[1] || ""; 
@@ -1950,7 +1974,13 @@
                     } 
                     db.pelanggan.push({ id: Date.now()+Math.random(), nama, info: infoArr }); sukses++; 
                 } 
-            } 
+            } else if(jenis === 'dompet') {
+                let nama = col[0], kat = col[1], saldo = getAngkaMurni(col[2]);
+                if(nama !== 'Nama Dompet' && nama.trim() !== '') {
+                    db.dompet.push({ id: Date.now()+Math.random(), nama: nama.trim(), kategori: kat||'Kas Fisik', saldo: saldo, pecahan: [] });
+                    sukses++;
+                }
+            }
         }); 
         document.getElementById('pasteExcelText').value = ''; simpanData(); alert(`${sukses} data ${jenis} berhasil diimpor!`); 
     }
